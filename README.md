@@ -2,6 +2,8 @@
 
 一个面向个人使用的 AI 生图控制台，支持文生图、图生图、批量队列、历史结果回显、模板管理、Agent 提示词优化和 Agent 对话工作流。
 
+GitHub 仓库：<https://github.com/cnxmu/GPT-Image-Web>
+
 ## 功能概览
 
 - 文生图和图生图：生图模型固定为 `gpt-image-2`。
@@ -11,9 +13,11 @@
 - 历史记录：生成任务写入 IndexedDB，点击历史可回填参数并显示结果。
 - 刷新续跑：运行中的历史任务可在刷新后恢复未完成任务。
 - 图生图参考图：支持 PNG/JPEG/WEBP，原图保存和上传，不压缩、不转码。
+- 参考图预览：图生图参考图和 Agent 对话图片都支持大图预览。
 - Agent 优化：输出提示词、负面提示词和对比说明。
 - Agent 对话：支持多会话、图片上传分析、动作确认、创建模板、展示历史结果、使用并生成。
 - 模板系统：内置头像、壁纸、电商图、产品海报和社媒体模板；用户模板保存在本地。
+- 基础 SEO：内置标题、描述、关键词、Open Graph、Twitter Card、JSON-LD、robots、sitemap 和 manifest。
 - 本地安全：密钥、历史、模板、图片资产均存储在当前浏览器 IndexedDB。
 
 ## 技术栈
@@ -66,6 +70,23 @@ API 地址在代码中配置为：
 ```text
 https://img.xmu.la
 ```
+
+## SEO 与静态资源
+
+项目已包含基础 SEO 文件：
+
+- `index.html`：标题、描述、关键词、canonical、Open Graph、Twitter Card、JSON-LD。
+- `public/robots.txt`：搜索引擎抓取规则。
+- `public/sitemap.xml`：站点地图。
+- `public/manifest.webmanifest`：Web App 基础信息。
+
+当前 SEO URL 使用 GitHub Pages 地址：
+
+```text
+https://cnxmu.github.io/GPT-Image-Web/
+```
+
+如果部署到自定义域名，需要同步替换 `index.html`、`public/robots.txt`、`public/sitemap.xml` 中的 URL。
 
 ## 安全说明
 
