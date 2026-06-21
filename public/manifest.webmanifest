@@ -1,0 +1,18 @@
+{
+  "name": "AI 生图工作站",
+  "short_name": "生图工作站",
+  "description": "一个面向个人使用的 AI 生图控制台，支持文生图、图生图、批量队列、历史结果回显、模板管理、Agent 提示词优化和 Agent 对话工作流。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "48x46",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
