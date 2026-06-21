@@ -21,10 +21,10 @@ function userTemplate(): TemplateRecord {
   return {
     id: 'user_template',
     source: 'user',
-    name: '用户模板',
+    name: '个人模板',
     mode: 'generation',
-    prompt: '用户提示词',
-    negativePrompt: '用户负面词',
+    prompt: '个人提示词',
+    negativePrompt: '个人负面词',
     aspectRatio: '16:9',
     resolutionTier: '1K',
     size: '1920x1080',
@@ -52,21 +52,21 @@ describe('SidebarTemplates', () => {
 
     render(<SidebarTemplates />)
 
-    expect(screen.queryByText('头像生成预设模板')).toBeNull()
+    expect(screen.queryByText('个人头像预设')).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: /系统预设/ }))
+    fireEvent.click(screen.getByRole('button', { name: /内置预设/ }))
 
-    expect(screen.getByText('头像生成预设模板')).toBeTruthy()
-    expect(screen.getAllByText('系统预设').length).toBeGreaterThan(0)
-    expect(screen.queryByTitle('删除模板')).toBeNull()
+    expect(screen.getByText('个人头像预设')).toBeTruthy()
+    expect(screen.getAllByText('内置预设').length).toBeGreaterThan(0)
+    expect(screen.queryByTitle('删除个人模板')).toBeNull()
   })
 
   it('applies a system template when clicked', () => {
     mockTemplates = [SYSTEM_TEMPLATES[0]]
 
     render(<SidebarTemplates />)
-    fireEvent.click(screen.getByRole('button', { name: /系统预设/ }))
-    fireEvent.click(screen.getByText('头像生成预设模板'))
+    fireEvent.click(screen.getByRole('button', { name: /内置预设/ }))
+    fireEvent.click(screen.getByText('个人头像预设'))
 
     expect(useWorkbenchStore.getState()).toMatchObject({
       prompt: SYSTEM_TEMPLATES[0].prompt,
@@ -79,7 +79,7 @@ describe('SidebarTemplates', () => {
     mockTemplates = [userTemplate()]
 
     render(<SidebarTemplates />)
-    fireEvent.click(screen.getByTitle('删除模板'))
+    fireEvent.click(screen.getByTitle('删除个人模板'))
 
     expect(deleteTemplate).toHaveBeenCalledWith('user_template')
   })

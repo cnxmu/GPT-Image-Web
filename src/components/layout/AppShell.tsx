@@ -43,10 +43,10 @@ export function AppShell() {
           <Card className="gap-0">
             <Tabs defaultValue="templates" className="min-h-0 gap-0">
               <CardHeader className="flex-row items-center justify-between gap-3 pb-3">
-                <CardTitle className="text-sm">资源导航</CardTitle>
+                <CardTitle className="text-sm">我的资源</CardTitle>
                 <TabsList>
-                  <TabsTrigger value="templates">模板</TabsTrigger>
-                  <TabsTrigger value="history">历史</TabsTrigger>
+                  <TabsTrigger value="templates">个人模板</TabsTrigger>
+                  <TabsTrigger value="history">我的历史</TabsTrigger>
                 </TabsList>
               </CardHeader>
               <CardContent className="px-3 pb-3">
@@ -75,7 +75,7 @@ export function AppShell() {
         <aside className="scrollbar-none order-3 min-w-0 xl:sticky xl:top-[4.5rem] xl:max-h-[calc(100svh-5.5rem)] xl:overflow-y-auto">
           <Card className="gap-0">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">生成检查器</CardTitle>
+              <CardTitle className="text-sm">个人生成设置</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 px-3 pb-3">
               <ParameterPanel />

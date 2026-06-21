@@ -23,7 +23,7 @@ export function useAgentChatMutation() {
       history: HistoryRecord[]
     }) => {
       const apiKey = (await getSecret('agentApiKey'))?.value
-      if (!apiKey) throw new AppError('MISSING_AGENT_API_KEY', '请先在设置中保存 Agent API Key')
+      if (!apiKey) throw new AppError('MISSING_AGENT_API_KEY', '请先在个人设置中保存 Agent API Key')
       const model = await getAgentModel()
       const imageInputs = await collectAgentImageInputs(messages)
       return sendAgentChatMessage({

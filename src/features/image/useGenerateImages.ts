@@ -45,9 +45,9 @@ function snapshotForm(state: ReturnType<typeof useWorkbenchStore.getState>): Ima
 }
 
 function validateForm(form: ImageFormState, referenceImages: File[]) {
-  if (!form.prompt) throw new AppError('INVALID_FORM', '请输入提示词')
+  if (!form.prompt) throw new AppError('INVALID_FORM', '请输入你想生成的提示词')
   if (form.mode === 'edit' && referenceImages.length === 0) {
-    throw new AppError('UPLOAD_REQUIRED', '图生图模式请至少上传一张参考图')
+    throw new AppError('UPLOAD_REQUIRED', '图生图模式请先上传至少一张你的参考图')
   }
 }
 
@@ -416,7 +416,7 @@ async function failRestoredJobsForMissingReferences(queuedJobIds: string[]) {
     latestBatch = useWorkbenchStore.getState().failJob(jobId, {
       durationMs: 0,
       finishedAt: performance.now(),
-      error: '参考图本地文件缺失，无法续跑',
+      error: '你的参考图本地文件缺失，无法续跑',
     })
   }
   if (latestBatch) await persistBatchHistory(latestBatch)
@@ -502,7 +502,7 @@ export function useGenerateImagesMutation() {
       const referenceImages = store.referenceImages.map((item) => item.file)
       const apiKey = (await getSecret('imageApiKey'))?.value
 
-      if (!apiKey) throw new AppError('MISSING_IMAGE_API_KEY', '请先在设置中保存生图 API Key')
+      if (!apiKey) throw new AppError('MISSING_IMAGE_API_KEY', '请先在个人设置中保存生图 API Key')
       validateForm(form, referenceImages)
 
       const historyReferenceImages = form.mode === 'edit' ? await persistReferenceImages(referenceImages) : []

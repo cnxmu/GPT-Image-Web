@@ -28,7 +28,7 @@ export function SidebarTemplates() {
     const template: TemplateRecord = {
       id: createId('template'),
       source: 'user',
-      name: name.trim() || `模板 ${new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`,
+      name: name.trim() || `我的模板 ${new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`,
       description: description.trim() || undefined,
       mode: state.mode,
       prompt: state.prompt,
@@ -54,27 +54,27 @@ export function SidebarTemplates() {
     <div className="grid gap-3">
       <div className="grid gap-3 rounded-xl bg-muted/35 p-3">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold">预设模板</p>
-          <Button type="button" size="icon-sm" variant="ghost" title="保存当前参数为模板" onClick={saveTemplate}>
+          <p className="text-sm font-semibold">保存个人模板</p>
+          <Button type="button" size="icon-sm" variant="ghost" title="保存当前参数为个人模板" onClick={saveTemplate}>
             <Save className="h-4 w-4" />
           </Button>
         </div>
-        <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="模板名称" />
-        <Textarea rows={2} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="模板描述，可选" />
+        <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="我的模板名称" />
+        <Textarea rows={2} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="给自己看的模板描述，可选" />
         <Button type="button" onClick={saveTemplate}>
           <Plus className="h-4 w-4" />
-          保存当前模板
+          保存为个人模板
         </Button>
       </div>
 
         <div className="grid gap-4">
           <section className="grid gap-2">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold">我的模板</p>
+              <p className="text-sm font-semibold">个人模板</p>
               <Badge variant="secondary">{userTemplates.length}</Badge>
             </div>
             {userTemplates.length === 0 ? (
-              <EmptyState title="暂无我的模板" detail="调好参数后可以保存为常用模板，也可以让 Agent 帮你创建。" />
+              <EmptyState title="还没有个人模板" detail="调好参数后可以保存为自己的常用模板，也可以让 Agent 帮你创建。" />
             ) : (
               userTemplates.map((template) => (
                 <TemplateCard key={template.id} template={template} onApply={applyTemplate} onDelete={deleteTemplate} />
@@ -90,7 +90,7 @@ export function SidebarTemplates() {
             >
               <span className="flex items-center gap-2 text-sm font-semibold">
                 {systemOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                系统预设
+                内置预设
               </span>
               <Badge variant="outline">{systemTemplates.length}</Badge>
             </button>
@@ -122,14 +122,14 @@ function TemplateCard({
         <button type="button" className="min-w-0 text-left" onClick={() => onApply(template)}>
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h3 className="truncate text-sm font-semibold">{template.name}</h3>
-            {template.source === 'system' ? <Badge variant="outline">系统预设</Badge> : null}
+            {template.source === 'system' ? <Badge variant="outline">内置预设</Badge> : null}
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
             {template.mode === 'generation' ? '文生图' : '图生图'} · {template.aspectRatio} · {template.resolutionTier} · {template.size}
           </p>
         </button>
         {template.source === 'system' ? null : (
-          <Button type="button" size="icon" variant="ghost" title="删除模板" onClick={() => onDelete(template.id)}>
+          <Button type="button" size="icon" variant="ghost" title="删除个人模板" onClick={() => onDelete(template.id)}>
             <Trash2 className="h-4 w-4" />
           </Button>
         )}

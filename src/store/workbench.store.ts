@@ -168,7 +168,7 @@ function historyToBatch(record: HistoryRecord): GenerationBatch | undefined {
     notice:
       record.notice ||
       (record.results.length === 0 && (record.status === 'running' || record.status === 'pending')
-        ? '该运行中记录来自旧版本，缺少持久化任务明细，只能显示占位，无法完整续跑。'
+        ? '这条运行中历史来自旧版本，缺少持久化明细，只能为你显示占位，无法完整续跑。'
         : undefined),
     results,
   }

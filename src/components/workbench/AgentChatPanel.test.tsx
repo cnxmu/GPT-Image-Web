@@ -322,7 +322,7 @@ describe('AgentChatPanel', () => {
 
     expect(screen.queryByTestId('agent-conversation-history-list')).toBeNull()
 
-    fireEvent.click(await screen.findByRole('button', { name: '历史会话' }))
+    fireEvent.click(await screen.findByRole('button', { name: '我的会话' }))
 
     const list = await screen.findByTestId('agent-conversation-history-list')
     expect(within(list).getByText('第二个会话')).toBeTruthy()
@@ -365,7 +365,7 @@ describe('AgentChatPanel', () => {
     render(<AgentChatPanel />)
 
     expect(await screen.findByText('第二个会话内容')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: '历史会话' }))
+    fireEvent.click(screen.getByRole('button', { name: '我的会话' }))
     const list = await screen.findByTestId('agent-conversation-history-list')
     fireEvent.click(within(list).getByText('默认对话'))
 
@@ -383,9 +383,9 @@ describe('AgentChatPanel', () => {
 
     render(<AgentChatPanel />)
 
-    fireEvent.click(await screen.findByRole('button', { name: '历史会话' }))
+    fireEvent.click(await screen.findByRole('button', { name: '我的会话' }))
     const list = await screen.findByTestId('agent-conversation-history-list')
-    fireEvent.click(within(list).getByTitle('重命名对话'))
+    fireEvent.click(within(list).getByTitle('重命名我的对话'))
 
     await waitFor(() => {
       expect(screen.getAllByText('新的会话标题').length).toBeGreaterThan(0)
@@ -430,9 +430,9 @@ describe('AgentChatPanel', () => {
 
     render(<AgentChatPanel />)
 
-    fireEvent.click(await screen.findByRole('button', { name: '历史会话' }))
+    fireEvent.click(await screen.findByRole('button', { name: '我的会话' }))
     const row = await screen.findByTestId('agent-conversation-row-conversation_1')
-    fireEvent.click(within(row).getByTitle('删除对话'))
+    fireEvent.click(within(row).getByTitle('删除我的对话'))
 
     await waitFor(() => {
       expect(mockConversations.find((item) => item.id === 'conversation_1')).toBeUndefined()
@@ -531,11 +531,11 @@ describe('AgentChatPanel', () => {
 
     render(<AgentChatPanel />)
 
-    expect(await screen.findByText('模板：Agent 海报模板')).toBeTruthy()
-    expect(screen.getByText('描述：保存 Agent 方案')).toBeTruthy()
+    expect(await screen.findByText('我的模板：Agent 海报模板')).toBeTruthy()
+    expect(screen.getByText('给自己的描述：保存 Agent 方案')).toBeTruthy()
     expect(upsertTemplate).not.toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('button', { name: '保存模板' }))
+    fireEvent.click(screen.getByRole('button', { name: '保存为我的模板' }))
 
     await waitFor(() => {
       expect(upsertTemplate).toHaveBeenCalledTimes(1)
@@ -826,7 +826,7 @@ describe('AgentChatPanel', () => {
 
     render(<AgentChatPanel />)
 
-    fireEvent.click(await screen.findByRole('button', { name: '清空对话' }))
+    fireEvent.click(await screen.findByRole('button', { name: '清空当前对话' }))
 
     await waitFor(() => {
       expect(savedMessages).toEqual([])

@@ -38,9 +38,9 @@ describe('GenerateButton', () => {
     vi.spyOn(window, 'confirm').mockReturnValueOnce(false)
 
     render(<GenerateButton />)
-    fireEvent.click(screen.getByRole('button', { name: '开始生成' }))
+    fireEvent.click(screen.getByRole('button', { name: '开始我的生成' }))
 
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('本次将提交 25 张图片生成任务'))
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('这次会为你提交 25 张图片生成请求'))
     expect(generateMutate).not.toHaveBeenCalled()
   })
 
@@ -49,7 +49,7 @@ describe('GenerateButton', () => {
     const confirmSpy = vi.spyOn(window, 'confirm')
 
     render(<GenerateButton />)
-    fireEvent.click(screen.getByRole('button', { name: '开始生成' }))
+    fireEvent.click(screen.getByRole('button', { name: '开始我的生成' }))
 
     expect(confirmSpy).not.toHaveBeenCalled()
     expect(generateMutate).toHaveBeenCalledTimes(1)

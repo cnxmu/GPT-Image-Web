@@ -9,13 +9,13 @@ import { SecretFields } from './SecretFields'
 
 export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   async function clearAllLocalData() {
-    if (!confirm('确定清除密钥、模板、历史、资源和设置？此操作不可恢复。')) return
+    if (!confirm('确定清除你保存在本机的密钥、模板、历史、资源和设置？此操作不可恢复。')) return
     await clearAllLocalDataFromDb()
     onClose()
   }
 
   async function cleanupAssets() {
-    if (!confirm('确定清理未被历史记录或 Agent 对话引用的本地资源缓存？')) return
+    if (!confirm('确定清理未被你的历史或 Agent 对话引用的本地图片缓存？')) return
     const removed = await clearUnreferencedLocalAssets()
     alert(`已清理 ${removed} 个未引用资源。`)
   }
@@ -24,8 +24,8 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent className="scrollbar-none max-h-[92svh] overflow-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>设置</DialogTitle>
-          <DialogDescription>管理本机密钥、Agent 模型和本地数据。</DialogDescription>
+          <DialogTitle>个人设置</DialogTitle>
+          <DialogDescription>管理你保存在本机的密钥、Agent 模型和个人数据。</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-5">
@@ -34,22 +34,22 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
           <GenerationSafetyField />
 
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm leading-6 text-amber-900 dark:text-amber-100">
-            密钥仅保存在当前浏览器本地 IndexedDB。请使用 HTTPS 和访问控制部署；公开部署时不应内置平台级密钥，需要后端代理或边缘函数保护密钥。
+            密钥只保存在你当前使用的这个浏览器里。换设备或换浏览器时需要重新填写；清除浏览器站点数据后也会一起删除。
           </div>
         </div>
 
         <DialogFooter className="flex-wrap sm:justify-between">
-          <Button type="button" variant="outline" onClick={() => confirm('确定清空历史记录？') && clearHistory()}>
-            清空历史与历史图片
+          <Button type="button" variant="outline" onClick={() => confirm('确定清空你的历史记录和历史图片？') && clearHistory()}>
+            清空我的历史
           </Button>
           <Button type="button" variant="outline" onClick={cleanupAssets}>
-            清理未引用资源
+            清理未引用图片
           </Button>
-          <Button type="button" variant="outline" onClick={() => confirm('确定清空模板？') && clearTemplates()}>
-            清空模板
+          <Button type="button" variant="outline" onClick={() => confirm('确定清空你的个人模板？') && clearTemplates()}>
+            清空个人模板
           </Button>
           <Button type="button" variant="destructive" onClick={clearAllLocalData}>
-            清除全部本地数据
+            清除我的本地数据
           </Button>
         </DialogFooter>
       </DialogContent>

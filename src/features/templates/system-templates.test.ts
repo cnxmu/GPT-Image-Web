@@ -6,10 +6,10 @@ function userTemplate(partial: Partial<TemplateRecord> = {}): TemplateRecord {
   return {
     id: 'user_template',
     source: 'user',
-    name: '用户模板',
+    name: '个人模板',
     mode: 'generation',
-    prompt: '用户提示词',
-    negativePrompt: '用户负面词',
+    prompt: '个人提示词',
+    negativePrompt: '个人负面词',
     aspectRatio: '1:1',
     resolutionTier: '1K',
     size: '1024x1024',
@@ -29,15 +29,15 @@ describe('system templates', () => {
     expect(mergeSystemTemplates([])).toEqual(SYSTEM_TEMPLATES)
     expect(SYSTEM_TEMPLATES.map((template) => template.name)).toEqual(
       expect.arrayContaining([
-        '头像生成预设模板',
-        '壁纸生成预设模板',
-        '电商图生成预设模板',
-        '产品海报预设模板',
-        '公众号封面/头图预设模板',
-        '视频封面预设模板',
-        '小红书封面预设模板',
-        '内容头图预设模板',
-        '短视频竖版封面预设模板',
+        '个人头像预设',
+        '个人壁纸预设',
+        '个人电商图预设',
+        '个人产品海报预设',
+        '公众号封面个人预设',
+        '视频封面个人预设',
+        '小红书封面个人预设',
+        '内容头图个人预设',
+        '短视频竖版个人预设',
       ]),
     )
   })

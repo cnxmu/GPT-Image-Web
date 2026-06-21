@@ -31,8 +31,8 @@ export function SidebarHistory() {
   return (
     <div className="grid gap-3">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold">历史记录</p>
-          <Button type="button" size="sm" variant="ghost" onClick={() => confirm('确定清空历史记录？') && clearHistory()}>
+          <p className="text-sm font-semibold">我的历史</p>
+          <Button type="button" size="sm" variant="ghost" onClick={() => confirm('确定清空你的历史记录和历史图片？') && clearHistory()}>
             清空
           </Button>
         </div>
@@ -53,7 +53,7 @@ export function SidebarHistory() {
 
         <div className="scrollbar-none grid max-h-[calc(100svh-13rem)] gap-2 overflow-y-auto pr-1">
           {filtered.length === 0 ? (
-            <EmptyState title="暂无历史" detail="生成任务会自动写入 IndexedDB。" />
+            <EmptyState title="还没有历史记录" detail="你的每次生成都会自动保存在本机 IndexedDB。" />
           ) : (
             filtered.map((item) => <HistoryItem key={item.id} item={item} onApply={() => handleApplyHistory(item)} />)
           )}
@@ -68,13 +68,13 @@ function HistoryItem({ item, onApply }: { item: HistoryRecord; onApply: () => vo
       <div className="flex items-start justify-between gap-2">
         <button type="button" className="min-w-0 text-left" onClick={onApply}>
           <h3 className="line-clamp-2 text-sm font-semibold leading-5">
-            {item.prompt || '未命名任务'}
+            {item.prompt || '未命名生成'}
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
             {formatDateTime(item.startedAt)} · {item.params.size} · {formatDuration(item.slowestMs)}
           </p>
         </button>
-        <Button type="button" size="icon" variant="ghost" title="删除历史" onClick={() => deleteHistory(item.id)}>
+        <Button type="button" size="icon" variant="ghost" title="删除这条历史" onClick={() => deleteHistory(item.id)}>
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
@@ -90,7 +90,7 @@ function HistoryItem({ item, onApply }: { item: HistoryRecord; onApply: () => vo
 
       <Button type="button" className="mt-3 w-full" size="sm" variant="outline" onClick={onApply}>
         <RotateCcw className="h-4 w-4" />
-        回填参数
+        使用这次参数
       </Button>
     </article>
   )

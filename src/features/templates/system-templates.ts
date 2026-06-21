@@ -8,7 +8,7 @@ export const SYSTEM_TEMPLATES: TemplateRecord[] = [
   {
     id: 'system_avatar_portrait',
     source: 'system',
-    name: '头像生成预设模板',
+    name: '个人头像预设',
     description: '适合个人头像、职业头像、社交平台头像，主体清晰，背景干净。',
     mode: 'generation',
     prompt:
@@ -28,7 +28,7 @@ export const SYSTEM_TEMPLATES: TemplateRecord[] = [
   {
     id: 'system_wallpaper_desktop',
     source: 'system',
-    name: '壁纸生成预设模板',
+    name: '个人壁纸预设',
     description: '适合桌面或横版壁纸，强调沉浸感、层次和留白。',
     mode: 'generation',
     prompt:
@@ -48,7 +48,7 @@ export const SYSTEM_TEMPLATES: TemplateRecord[] = [
   {
     id: 'system_ecommerce_product',
     source: 'system',
-    name: '电商图生成预设模板',
+    name: '个人电商图预设',
     description: '适合商品主图、详情页卖点图和场景展示图。',
     mode: 'generation',
     prompt:
@@ -69,7 +69,7 @@ export const SYSTEM_TEMPLATES: TemplateRecord[] = [
   {
     id: 'system_product_poster',
     source: 'system',
-    name: '产品海报预设模板',
+    name: '个人产品海报预设',
     description: '适合新品发布、活动促销、品牌视觉和产品广告海报。',
     mode: 'generation',
     prompt:
@@ -90,7 +90,7 @@ export const SYSTEM_TEMPLATES: TemplateRecord[] = [
   {
     id: 'system_social_wechat_cover',
     source: 'system',
-    name: '公众号封面/头图预设模板',
+    name: '公众号封面个人预设',
     description: '适合微信公众号文章封面、头图和专题首图。',
     mode: 'generation',
     prompt:
@@ -110,7 +110,7 @@ export const SYSTEM_TEMPLATES: TemplateRecord[] = [
   {
     id: 'system_social_video_cover',
     source: 'system',
-    name: '视频封面预设模板',
+    name: '视频封面个人预设',
     description: '适合横版视频封面、课程封面、栏目封面。',
     mode: 'generation',
     prompt:
@@ -131,7 +131,7 @@ export const SYSTEM_TEMPLATES: TemplateRecord[] = [
   {
     id: 'system_social_xiaohongshu_cover',
     source: 'system',
-    name: '小红书封面预设模板',
+    name: '小红书封面个人预设',
     description: '适合小红书笔记封面、种草内容和生活方式内容。',
     mode: 'generation',
     prompt:
@@ -152,7 +152,7 @@ export const SYSTEM_TEMPLATES: TemplateRecord[] = [
   {
     id: 'system_social_article_header',
     source: 'system',
-    name: '内容头图预设模板',
+    name: '内容头图个人预设',
     description: '适合博客、知识库、官网文章和长内容头图。',
     mode: 'generation',
     prompt:
@@ -172,7 +172,7 @@ export const SYSTEM_TEMPLATES: TemplateRecord[] = [
   {
     id: 'system_social_short_video_vertical',
     source: 'system',
-    name: '短视频竖版封面预设模板',
+    name: '短视频竖版个人预设',
     description: '适合抖音、视频号、快手等竖版短视频封面。',
     mode: 'generation',
     prompt:

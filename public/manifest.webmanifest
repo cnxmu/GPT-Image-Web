@@ -1,7 +1,7 @@
 {
-  "name": "AI 生图工作站",
-  "short_name": "生图工作站",
-  "description": "一个面向个人使用的 AI 生图控制台，支持文生图、图生图、批量队列、历史结果回显、模板管理、Agent 提示词优化和 Agent 对话工作流。",
+  "name": "个人 AI 生图控制台",
+  "short_name": "我的生图",
+  "description": "一个面向个人用户的 AI 生图控制台，支持文生图、图生图、批量队列、我的历史回显、个人模板管理、个人 Agent 优化和个人 Agent 对话流程。",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -28,11 +28,11 @@ export function ResultGrid() {
   return (
     <Card className="gap-0">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm">结果</CardTitle>
+        <CardTitle className="text-sm">我的结果</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4 p-4">
         {batches.length === 0 ? (
-          <EmptyState title="还没有生成结果" detail="每次点击生成都会创建一个批次，图片、耗时、真实尺寸和操作会显示在这里。" />
+          <EmptyState title="还没有本次结果" detail="点击生成后，这里会显示你的图片、耗时、真实尺寸和操作按钮。" />
         ) : (
           batches.map((batch) => <BatchResult key={batch.id} batch={batch} now={now} onPreview={setPreview} />)
         )}
@@ -59,7 +59,7 @@ function BatchResult({
       <div className="flex flex-wrap items-center justify-between gap-3 bg-card/80 px-4 py-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            {batch.source === 'history' ? <Badge variant="outline">历史结果</Badge> : null}
+            {batch.source === 'history' ? <Badge variant="outline">我的历史结果</Badge> : null}
             <StatusBadge status={batch.status} />
             <h3 className="text-sm font-semibold">
               {batch.form.mode === 'generation' ? '文生图' : '图生图'} · {batch.form.size} · {batch.form.outputFormat.toUpperCase()}

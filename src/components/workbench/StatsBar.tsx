@@ -16,7 +16,7 @@ export function StatsBar() {
 
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-      <Metric label="当前任务总数" value={stats.total} />
+      <Metric label="本次生成总数" value={stats.total} />
       <Metric label="成功" value={stats.success} tone="success" />
       <Metric label="失败" value={stats.failed} tone="danger" />
       <Metric label="最慢耗时" value={formatDuration(stats.slowestMs)} />

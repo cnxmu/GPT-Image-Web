@@ -204,7 +204,7 @@ describe('workbench generation queue', () => {
     expect(visible.status).toBe('running')
     expect(visible.results).toHaveLength(2)
     expect(visible.results.every((job) => job.status === 'queued')).toBe(true)
-    expect(visible.notice).toContain('缺少持久化任务明细')
+    expect(visible.notice).toContain('缺少持久化明细')
   })
 
   it('refills form params when applying history', () => {

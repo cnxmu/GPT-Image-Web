@@ -22,7 +22,7 @@ export function GenerateButton() {
 
   function handleGenerate() {
     if (count > LARGE_BATCH_CONFIRM_COUNT) {
-      const ok = confirm(`本次将提交 ${count} 张图片生成任务，当前并发上限为 ${concurrency}。这可能产生较高费用，并增加限流或失败概率。确定继续吗？`)
+      const ok = confirm(`这次会为你提交 ${count} 张图片生成请求，当前个人并发上限为 ${concurrency}。可能产生较高费用，并增加限流或失败概率。确定继续吗？`)
       if (!ok) return
     }
     mutation.mutate()
@@ -32,14 +32,14 @@ export function GenerateButton() {
     <section className="rounded-xl bg-muted/35 p-3">
       <div className="grid gap-3">
         <div>
-          <p className="text-sm font-semibold">准备生成 {count} 张图片</p>
+          <p className="text-sm font-semibold">本次准备生成 {count} 张图片</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            拆分为 {count} 次请求，每次固定 n=1。并发上限 {concurrency}，当前运行 {activeJobCount} 个，排队 {queuedCount} 个。
+            会拆分为 {count} 次请求，每次固定 n=1。你的并发上限 {concurrency}，当前运行 {activeJobCount} 个，排队 {queuedCount} 个。
           </p>
         </div>
         <Button type="button" className="w-full" disabled={mutation.isPending} onClick={handleGenerate}>
           {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-          {mutation.isPending ? '提交中' : '开始生成'}
+          {mutation.isPending ? '提交中' : '开始我的生成'}
         </Button>
       </div>
     </section>

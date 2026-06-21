@@ -35,17 +35,17 @@ describe('PromptEditor', () => {
 
     render(<PromptEditor />)
 
-    fireEvent.click(screen.getByRole('button', { name: /Agent 优化/ }))
+    fireEvent.click(screen.getByRole('button', { name: /帮我优化/ }))
 
-    await screen.findByText('优化后提示词')
+    await screen.findByText('优化后的提示词')
     expect(mutateAsync).toHaveBeenCalledWith({ prompt: '咖啡杯', negativePrompt: '' })
 
-    fireEvent.click(screen.getByRole('button', { name: '使用候选' }))
+    fireEvent.click(screen.getByRole('button', { name: '使用这版' }))
 
     await waitFor(() => {
       expect(useWorkbenchStore.getState().prompt).toBe('电影感咖啡杯，干净背景')
       expect(useWorkbenchStore.getState().negativePrompt).toBe('模糊，水印，文字')
-      expect(screen.queryByText('Agent 候选结果')).toBeNull()
+      expect(screen.queryByText('给我的优化候选')).toBeNull()
     })
   })
 })

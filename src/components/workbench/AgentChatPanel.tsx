@@ -136,7 +136,7 @@ export function AgentChatPanel() {
   }
 
   async function handleRenameConversation(conversation: AgentConversationRecord) {
-    const nextTitle = prompt('重命名对话', conversation.title || getConversationTitle(conversation, conversation.messages))
+    const nextTitle = prompt('重命名我的对话', conversation.title || getConversationTitle(conversation, conversation.messages))
     if (nextTitle === null) return
     const renamed = await renameAgentConversation(conversation.id, nextTitle)
     if (!renamed) return
@@ -182,7 +182,7 @@ export function AgentChatPanel() {
     const largeAttachments = pendingAttachments.filter((attachment) => attachment.sizeBytes > LARGE_AGENT_IMAGE_BYTES)
     if (largeAttachments.length > 0) {
       const totalMb = largeAttachments.reduce((sum, attachment) => sum + attachment.sizeBytes, 0) / 1024 / 1024
-      const ok = confirm(`当前有 ${largeAttachments.length} 张图片超过 10MB，发送给 Agent 时会转为 base64，可能较慢并增加请求体积。约 ${totalMb.toFixed(1)}MB，确定发送吗？`)
+      const ok = confirm(`你这次有 ${largeAttachments.length} 张图片超过 10MB，发送给 Agent 时会转为 base64，可能较慢并增加请求体积。约 ${totalMb.toFixed(1)}MB，确定发送吗？`)
       if (!ok) return
     }
 
@@ -223,7 +223,7 @@ export function AgentChatPanel() {
   async function handleFiles(files: FileList | File[]) {
     const remaining = MAX_AGENT_MESSAGE_IMAGES - pendingAttachments.length
     if (remaining <= 0) {
-      setError(`单条 Agent 消息最多上传 ${MAX_AGENT_MESSAGE_IMAGES} 张图片`)
+      setError(`你每条 Agent 消息最多上传 ${MAX_AGENT_MESSAGE_IMAGES} 张图片`)
       return
     }
 
@@ -234,7 +234,7 @@ export function AgentChatPanel() {
       return
     }
     if (uniqueFiles.length > accepted.length) {
-      setError(`单条 Agent 消息最多上传 ${MAX_AGENT_MESSAGE_IMAGES} 张图片，已保留前 ${accepted.length} 张可用图片`)
+      setError(`你每条 Agent 消息最多上传 ${MAX_AGENT_MESSAGE_IMAGES} 张图片，已保留前 ${accepted.length} 张可用图片`)
     } else {
       setError(undefined)
     }
@@ -312,7 +312,7 @@ export function AgentChatPanel() {
 
       if (action.type === 'showHistoryResult') {
         const record = history.find((item) => item.id === getActionHistoryId(action))
-        if (!record) throw new Error('未找到这条历史记录')
+        if (!record) throw new Error('未找到你的这条历史')
         store.applyHistory(record)
         store.showHistoryResult(record)
         await updateAction(messageId, action.id, { status: 'shown', error: undefined })
@@ -340,7 +340,7 @@ export function AgentChatPanel() {
       <div className="grid gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">Agent 会话</p>
+            <p className="text-xs font-medium text-muted-foreground">我的 Agent</p>
             <p className="mt-1 truncate text-sm font-semibold">
               {activeConversation ? getConversationTitle(activeConversation, activeConversation.messages) : '新对话'}
               <span className="ml-2 text-xs font-normal text-muted-foreground">{messages.length} 条消息</span>
@@ -353,11 +353,11 @@ export function AgentChatPanel() {
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={() => setHistoryOpen(true)}>
               <History className="h-4 w-4" />
-              历史会话
+              我的会话
             </Button>
             <Button type="button" size="sm" variant="ghost" onClick={handleClearConversation} disabled={messages.length === 0}>
               <Trash2 className="h-4 w-4" />
-              清空对话
+              清空当前对话
             </Button>
           </div>
         </div>
@@ -383,10 +383,10 @@ export function AgentChatPanel() {
         {!loaded ? (
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            正在载入对话
+            正在载入你的对话
           </div>
         ) : messages.length === 0 ? (
-          <div className="grid place-items-center text-sm text-muted-foreground">暂无对话</div>
+          <div className="grid place-items-center text-sm text-muted-foreground">还没有对话</div>
         ) : (
           messages.map((message) => (
             <MessageBubble
@@ -403,7 +403,7 @@ export function AgentChatPanel() {
         {chatMutation.isPending ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Agent 正在回复
+            Agent 正在为你回复
           </div>
         ) : null}
       </div>
@@ -427,7 +427,7 @@ export function AgentChatPanel() {
               void handleSend()
             }
           }}
-          placeholder="让 Agent 调整提示词、套模板、复用历史或解释失败原因"
+          placeholder="让 Agent 帮你改提示词、套个人模板、复用历史或解释失败原因"
         />
         <div className="flex items-center justify-between gap-2">
           <div>
@@ -479,8 +479,8 @@ function ConversationHistoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[82svh] overflow-hidden sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>历史会话</DialogTitle>
-          <DialogDescription>切换、重命名或删除本地保存的 Agent 对话。</DialogDescription>
+          <DialogTitle>我的 Agent 会话</DialogTitle>
+          <DialogDescription>切换、重命名或删除你保存在本机的 Agent 对话。</DialogDescription>
         </DialogHeader>
         <div data-testid="agent-conversation-history-list" className="scrollbar-none grid max-h-[60svh] gap-2 overflow-y-auto pr-1">
           {sortConversations(conversations).map((conversation) => {
@@ -503,10 +503,10 @@ function ConversationHistoryDialog({
                     {conversation.messages.length} 条消息 · {formatConversationTime(conversation.updatedAt)}
                   </p>
                 </button>
-                <Button type="button" size="icon-xs" variant="ghost" title="重命名对话" onClick={() => onRename(conversation)}>
+                <Button type="button" size="icon-xs" variant="ghost" title="重命名我的对话" onClick={() => onRename(conversation)}>
                   <Edit3 className="h-3.5 w-3.5" />
                 </Button>
-                <Button type="button" size="icon-xs" variant="ghost" title="删除对话" onClick={() => onDelete(conversation)}>
+                <Button type="button" size="icon-xs" variant="ghost" title="删除我的对话" onClick={() => onDelete(conversation)}>
                   <X className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -713,7 +713,7 @@ function ActionButton({ action, onExecute }: { action: AgentProposedAction; onEx
     generate: '应用并生成',
     applyTemplate: '应用模板',
     showHistoryResult: '展示历史',
-    createTemplate: '保存模板',
+    createTemplate: '保存为我的模板',
     explain: '知道了',
   }
   const done = action.status !== 'pending'
@@ -739,21 +739,21 @@ function ActionPreview({
 }) {
   if (action.type === 'applyTemplate') {
     const template = templates.find((item) => item.id === getActionTemplateId(action))
-    return <p className="text-xs">模板：{template ? template.name : '未找到模板'}</p>
+    return <p className="text-xs">要使用的模板：{template ? template.name : '未找到模板'}</p>
   }
 
   if (action.type === 'showHistoryResult') {
     const record = history.find((item) => item.id === getActionHistoryId(action))
-    return <p className="text-xs">历史：{record ? `${record.status}，成功 ${record.success}/${record.total}` : '未找到历史记录'}</p>
+    return <p className="text-xs">我的历史：{record ? `${record.status}，成功 ${record.success}/${record.total}` : '未找到这条历史'}</p>
   }
 
   if (action.type === 'createTemplate') {
     const draft = getActionTemplateDraft(action, useWorkbenchStore.getState())
     return (
       <div className="grid gap-2 text-xs">
-        <p>模板：{draft.name}</p>
-        {draft.description ? <p className="text-muted-foreground">描述：{draft.description}</p> : null}
-        {changes.length === 0 ? <p className="text-slate-500 dark:text-slate-400">将按当前表单保存模板。</p> : null}
+        <p>我的模板：{draft.name}</p>
+        {draft.description ? <p className="text-muted-foreground">给自己的描述：{draft.description}</p> : null}
+        {changes.length === 0 ? <p className="text-slate-500 dark:text-slate-400">将按你当前表单保存为个人模板。</p> : null}
       </div>
     )
   }

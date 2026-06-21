@@ -46,16 +46,16 @@ export function PromptEditor() {
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as PromptTab)}>
         <CardHeader className="flex items-center justify-between gap-3 pb-3">
           <div className="flex min-w-0 flex-wrap items-center gap-3">
-            <CardTitle className="shrink-0 text-sm">提示词工作区</CardTitle>
+            <CardTitle className="shrink-0 text-sm">我的提示词</CardTitle>
             <TabsList>
-              <TabsTrigger value="editor">提示词编辑</TabsTrigger>
-              <TabsTrigger value="chat">Agent 对话</TabsTrigger>
+              <TabsTrigger value="editor">编辑提示词</TabsTrigger>
+              <TabsTrigger value="chat">个人 Agent</TabsTrigger>
             </TabsList>
           </div>
           {activeTab === 'editor' ? (
             <Button type="button" size="sm" variant="outline" onClick={handleOptimize} disabled={optimizeMutation.isPending}>
               <WandSparkles className="h-4 w-4" />
-              {optimizeMutation.isPending ? '优化中' : 'Agent 优化'}
+              {optimizeMutation.isPending ? '优化中' : '帮我优化'}
             </Button>
           ) : null}
         </CardHeader>
@@ -85,14 +85,14 @@ export function PromptEditor() {
           {candidate ? (
             <div className="rounded-xl bg-accent/45 p-3">
               <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="text-sm font-medium">Agent 候选结果</p>
+                <p className="text-sm font-medium">给我的优化候选</p>
                 <Button type="button" size="sm" onClick={applyCandidate}>
-                  使用候选
+                  使用这版
                 </Button>
               </div>
               <div className="grid gap-3 text-sm leading-6">
-                <CandidateBlock title="优化后提示词" content={candidate.prompt} />
-                <CandidateBlock title="优化后负面提示词" content={candidate.negativePrompt} />
+                <CandidateBlock title="优化后的提示词" content={candidate.prompt} />
+                <CandidateBlock title="优化后的负面提示词" content={candidate.negativePrompt} />
                 <div>
                   <p className="mb-1 text-xs font-semibold">与原提示词对比</p>
                   <ul className="list-disc space-y-1 pl-5">
