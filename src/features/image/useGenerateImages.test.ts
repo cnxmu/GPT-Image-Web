@@ -1,0 +1,96 @@
+import { describe, expect, it } from 'vitest'
+import type { HistoryRecord } from '../../types/history'
+import type { ImageFormState } from '../../types/image'
+import { createBatch, createInitialHistory, createRestoredBatchFromHistory } from './useGenerateImages'
+
+const form: ImageFormState = {
+  mode: 'generation',
+  prompt: 'test',
+  negativePrompt: '',
+  aspectRatio: '1:1',
+  resolutionTier: '1K',
+  size: '1024x1024',
+  quality: 'high',
+  moderation: 'auto',
+  count: 3,
+  compressionRate: 0.8,
+  outputFormat: 'png',
+}
+
+function historyRecord(): HistoryRecord {
+  return {
+    id: 'history-a',
+    mode: 'generation',
+    prompt: '恢复测试',
+    params: {
+      aspectRatio: '1:1',
+      resolutionTier: '1K',
+      size: '1024x1024',
+      quality: 'high',
+      moderation: 'auto',
+      count: 3,
+      outputFormat: 'png',
+    },
+    status: 'running',
+    total: 3,
+    success: 1,
+    failed: 1,
+    slowestMs: 900,
+    startedAt: '2026-06-20T00:00:00.000Z',
+    results: [
+      {
+        id: 'job-ok',
+        jobIndex: 0,
+        status: 'success',
+        b64Json: 'data:image/png;base64,ok',
+        actualWidth: 1024,
+        actualHeight: 1024,
+        durationMs: 700,
+      },
+      {
+        id: 'job-running',
+        jobIndex: 1,
+        status: 'running',
+        durationMs: 0,
+      },
+      {
+        id: 'job-failed',
+        jobIndex: 2,
+        status: 'failed',
+        durationMs: 900,
+        error: '接口失败',
+      },
+    ],
+  }
+}
+
+describe('generation history persistence', () => {
+  it('creates queued placeholders for every job in the initial history', () => {
+    const batch = createBatch(form)
+    const history = createInitialHistory(batch)
+
+    expect(history.status).toBe('running')
+    expect(history.results).toHaveLength(3)
+    expect(history.results.map((item) => item.status)).toEqual(['queued', 'queued', 'queued'])
+    expect(history.results.map((item) => item.jobIndex)).toEqual([0, 1, 2])
+  })
+
+  it('restores only unfinished jobs to the queue', () => {
+    const { batch, queuedJobIds } = createRestoredBatchFromHistory(historyRecord())
+
+    expect(batch.historyId).toBe('history-a')
+    expect(batch.results.map((item) => item.status)).toEqual(['success', 'queued', 'failed'])
+    expect(queuedJobIds).toEqual([batch.results[1].id])
+  })
+
+  it('creates legacy placeholders for old running history without results', () => {
+    const record = historyRecord()
+    record.results = []
+
+    const { batch, queuedJobIds } = createRestoredBatchFromHistory(record)
+
+    expect(batch.results).toHaveLength(3)
+    expect(batch.results.every((item) => item.status === 'queued')).toBe(true)
+    expect(queuedJobIds).toHaveLength(3)
+  })
+})
