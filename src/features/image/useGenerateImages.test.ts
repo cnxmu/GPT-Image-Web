@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { HistoryRecord } from '../../types/history'
-import type { ImageFormState } from '../../types/image'
-import { createBatch, createInitialHistory, createRestoredBatchFromHistory } from './useGenerateImages'
+import type { GenerationJob, ImageFormState } from '../../types/image'
+import { createBatch, createInitialHistory, createRestoredBatchFromHistory, toHistoryResult } from './useGenerateImages'
 
 const form: ImageFormState = {
   mode: 'generation',
@@ -42,7 +42,7 @@ function historyRecord(): HistoryRecord {
         id: 'job-ok',
         jobIndex: 0,
         status: 'success',
-        b64Json: 'data:image/png;base64,ok',
+        localAssetId: 'asset-ok',
         actualWidth: 1024,
         actualHeight: 1024,
         durationMs: 700,
@@ -80,6 +80,7 @@ describe('generation history persistence', () => {
 
     expect(batch.historyId).toBe('history-a')
     expect(batch.results.map((item) => item.status)).toEqual(['success', 'queued', 'failed'])
+    expect(batch.results[0].localAssetId).toBe('asset-ok')
     expect(queuedJobIds).toEqual([batch.results[1].id])
   })
 
@@ -92,5 +93,38 @@ describe('generation history persistence', () => {
     expect(batch.results).toHaveLength(3)
     expect(batch.results.every((item) => item.status === 'queued')).toBe(true)
     expect(queuedJobIds).toHaveLength(3)
+  })
+
+  it('stores generated image history by local asset id instead of base64 when available', () => {
+    const job: GenerationJob = {
+      id: 'job-asset',
+      batchId: 'batch-a',
+      jobIndex: 0,
+      status: 'success',
+      b64Json: 'data:image/png;base64,large',
+      localAssetId: 'asset-generated',
+      mimeType: 'image/png',
+      durationMs: 1000,
+      raw: {
+        b64_json: 'large',
+        nested: {
+          b64Json: 'large2',
+          keep: 'metadata',
+        },
+      },
+    }
+
+    expect(toHistoryResult(job)).toMatchObject({
+      id: 'job-asset',
+      localAssetId: 'asset-generated',
+      b64Json: undefined,
+      raw: {
+        b64_json: '[omitted image data]',
+        nested: {
+          b64Json: '[omitted image data]',
+          keep: 'metadata',
+        },
+      },
+    })
   })
 })

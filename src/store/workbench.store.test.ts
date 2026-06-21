@@ -71,7 +71,7 @@ function historyRecord(id: string): HistoryRecord {
         id: 'ok',
         jobIndex: 0,
         status: 'success',
-        url: 'https://example.com/a.webp',
+        localAssetId: 'asset-history-ok',
         actualWidth: 1920,
         actualHeight: 1080,
         durationMs: 1200,
@@ -151,7 +151,7 @@ describe('workbench generation queue', () => {
     expect(batches[0].form.size).toBe('1920x1080')
     expect(batches[0].results[0]).toMatchObject({
       status: 'success',
-      url: 'https://example.com/a.webp',
+      localAssetId: 'asset-history-ok',
       actualWidth: 1920,
       actualHeight: 1080,
       durationMs: 1200,

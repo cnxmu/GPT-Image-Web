@@ -40,6 +40,7 @@ export interface NormalizedImageResult {
   id: string
   url?: string
   b64Json?: string
+  localAssetId?: string
   mimeType: 'image/png' | 'image/webp' | 'image/jpeg'
   actualWidth?: number
   actualHeight?: number

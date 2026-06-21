@@ -12,6 +12,7 @@ GitHub 仓库：<https://github.com/cnxmu/GPT-Image-Web>
 - 实时任务状态：显示排队、生成中、成功、失败、耗时、实际尺寸。
 - 历史记录：生成任务写入 IndexedDB，点击历史可回填参数并显示结果。
 - 刷新续跑：运行中的历史任务可在刷新后恢复未完成任务。
+- 生成结果资产化：新生成图片以 Blob 形式写入本地资源库，历史记录只保存引用，减少 IndexedDB 膨胀。
 - 图生图参考图：支持 PNG/JPEG/WEBP，原图保存和上传，不压缩、不转码。
 - 参考图预览：图生图参考图和 Agent 对话图片都支持大图预览。
 - Agent 优化：输出提示词、负面提示词和对比说明。
@@ -75,18 +76,18 @@ https://img.xmu.la
 
 项目已包含基础 SEO 文件：
 
-- `index.html`：标题、描述、关键词、canonical、Open Graph、Twitter Card、JSON-LD。
+- `index.html`：标题、描述、关键词、Open Graph、Twitter Card、JSON-LD。
 - `public/robots.txt`：搜索引擎抓取规则。
 - `public/sitemap.xml`：站点地图。
 - `public/manifest.webmanifest`：Web App 基础信息。
+- `public/og-image.png`：社交平台分享预览图。
 
-当前 SEO URL 使用 GitHub Pages 地址：
+项目按根路径静态站点部署，不包含子路径部署配置。上线前请把以下文件里的占位域名 `https://example.com/` 替换成你的正式域名：
 
-```text
-https://cnxmu.github.io/GPT-Image-Web/
-```
+- `public/robots.txt`
+- `public/sitemap.xml`
 
-如果部署到自定义域名，需要同步替换 `index.html`、`public/robots.txt`、`public/sitemap.xml` 中的 URL。
+如果需要更完整的社交平台抓取效果，也可以在 `index.html` 中把 `og:image` 和 `twitter:image` 改为正式域名下的绝对地址，例如 `https://你的域名/og-image.png`。
 
 ## 安全说明
 
@@ -98,6 +99,7 @@ https://cnxmu.github.io/GPT-Image-Web/
 - 给站点加访问控制，例如 Basic Auth、VPN、Cloudflare Access 或仅内网访问。
 - 不要把 API Key 写入源码、构建产物或公开环境变量。
 - 在服务器或网关层添加 CSP 等安全响应头，参考 [部署文档.md](./部署文档.md)。
+- 设置里的“清理未引用资源”只删除未被历史记录或 Agent 对话引用的本地图片资产，不会破坏仍可回显的历史结果。
 
 更高安全级别的方案是增加后端代理或边缘函数，由服务端保存真实 API Key，前端只访问受保护的自有接口。
 

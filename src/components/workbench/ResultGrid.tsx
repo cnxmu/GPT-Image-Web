@@ -1,5 +1,7 @@
 import { Copy, Download, Eye, RotateCcw } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { useEffect, useMemo, useState } from 'react'
+import { db } from '../../db/db'
 import { getFilename } from '../../features/image/image.api'
 import { getImageSrc } from '../../features/image/image.adapter'
 import { copyImageToClipboard, downloadImage } from '../../lib/download'
@@ -10,8 +12,8 @@ import type { GenerationBatch, GenerationJob } from '../../types/image'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { EmptyState } from './empty-state'
+import { ImagePreviewDialog, type ImagePreviewData } from './ImagePreviewDialog'
 
 export function ResultGrid() {
   const allBatches = useWorkbenchStore((state) => state.batches)
@@ -21,7 +23,7 @@ export function ResultGrid() {
     [allBatches, visibleBatchIds],
   )
   const now = useNow()
-  const [preview, setPreview] = useState<GenerationJob | null>(null)
+  const [preview, setPreview] = useState<ImagePreviewData | null>(null)
 
   return (
     <Card className="gap-0">
@@ -36,18 +38,7 @@ export function ResultGrid() {
         )}
       </CardContent>
 
-      <Dialog open={Boolean(preview)} onOpenChange={(open) => !open && setPreview(null)}>
-        <DialogContent className="max-h-[92svh] overflow-hidden p-0 sm:max-w-5xl">
-          <DialogHeader className="px-4 py-3">
-            <DialogTitle>图片预览</DialogTitle>
-          </DialogHeader>
-          {preview ? (
-            <div className="scrollbar-none grid max-h-[78svh] place-items-center overflow-auto bg-muted p-4">
-              <img src={getImageSrc(preview)} alt="图片预览" className="max-h-[74svh] max-w-full object-contain" />
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      <ImagePreviewDialog preview={preview} onClose={() => setPreview(null)} />
     </Card>
   )
 }
@@ -59,7 +50,7 @@ function BatchResult({
 }: {
   batch: GenerationBatch
   now: number
-  onPreview: (job: GenerationJob) => void
+  onPreview: (preview: ImagePreviewData) => void
 }) {
   const slowestMs = getBatchSlowestMs(batch, now)
 
@@ -100,9 +91,9 @@ function JobCard({
   job: GenerationJob
   outputFormat: GenerationBatch['form']['outputFormat']
   now: number
-  onPreview: (job: GenerationJob) => void
+  onPreview: (preview: ImagePreviewData) => void
 }) {
-  const src = getImageSrc(job)
+  const src = useJobImageSrc(job)
   const durationMs = getJobDuration(job, now)
 
   return (
@@ -132,7 +123,22 @@ function JobCard({
             : '-'}
         </p>
         <div className="flex items-center gap-2">
-          <Button type="button" size="icon" variant="secondary" title="预览" disabled={!src} onClick={() => onPreview(job)}>
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            title="预览"
+            disabled={!src}
+            onClick={() =>
+              onPreview({
+                src,
+                title: '图片预览',
+                fileName: getFilename(outputFormat, job.jobIndex),
+                width: job.actualWidth,
+                height: job.actualHeight,
+              })
+            }
+          >
             <Eye className="h-4 w-4" />
           </Button>
           <Button
@@ -155,6 +161,37 @@ function JobCard({
       </div>
     </article>
   )
+}
+
+function useJobImageSrc(job: GenerationJob) {
+  const directSrc = getImageSrc(job)
+  const asset = useLiveQuery(
+    () => (!directSrc && job.localAssetId ? db.assets.get(job.localAssetId) : undefined),
+    [directSrc, job.localAssetId],
+  )
+  const [assetSrc, setAssetSrc] = useState<{ assetId?: string; src: string }>({ src: '' })
+
+  useEffect(() => {
+    if (directSrc || !asset || !job.localAssetId) return
+
+    let disposed = false
+    const objectUrl = URL.createObjectURL(asset.blob)
+    const assetId = job.localAssetId
+    queueMicrotask(() => {
+      if (disposed) {
+        URL.revokeObjectURL(objectUrl)
+        return
+      }
+      setAssetSrc({ assetId, src: objectUrl })
+    })
+
+    return () => {
+      disposed = true
+      URL.revokeObjectURL(objectUrl)
+    }
+  }, [asset, directSrc, job.localAssetId])
+
+  return directSrc || (assetSrc.assetId === job.localAssetId ? assetSrc.src : '')
 }
 
 function getJobDuration(job: GenerationJob, now: number) {

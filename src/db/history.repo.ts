@@ -18,7 +18,7 @@ export async function clearHistory() {
   return db.history.clear()
 }
 
-function getHistoryAssetIds(records: HistoryRecord[]) {
+export function getHistoryAssetIds(records: HistoryRecord[]) {
   return Array.from(
     new Set(
       records.flatMap((record) => [

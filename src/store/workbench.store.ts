@@ -137,6 +137,7 @@ function historyToBatch(record: HistoryRecord): GenerationBatch | undefined {
     status: result.status === 'running' ? 'queued' : result.status,
     url: result.url,
     b64Json: result.b64Json,
+    localAssetId: result.localAssetId,
     actualWidth: result.actualWidth,
     actualHeight: result.actualHeight,
     durationMs: result.durationMs,

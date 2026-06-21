@@ -14,6 +14,14 @@ export async function deleteAssets(ids: string[]) {
   await db.assets.bulkDelete(ids)
 }
 
+export async function clearUnreferencedAssets(referencedAssetIds: Iterable<string>) {
+  const referenced = new Set(referencedAssetIds)
+  const assets = await db.assets.toArray()
+  const orphanIds = assets.map((asset) => asset.id).filter((id) => !referenced.has(id))
+  await deleteAssets(orphanIds)
+  return orphanIds.length
+}
+
 export async function clearAssets() {
   return db.assets.clear()
 }

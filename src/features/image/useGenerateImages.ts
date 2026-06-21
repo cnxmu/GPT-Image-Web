@@ -13,7 +13,7 @@ import { upsertHistory } from '../../db/history.repo'
 import { useWorkbenchStore } from '../../store/workbench.store'
 import type { AssetRecord } from '../../types/api'
 import type { HistoryImageResult, HistoryRecord, HistoryReferenceImage } from '../../types/history'
-import type { GenerationBatch, GenerationJob, ImageFormState } from '../../types/image'
+import type { GenerationBatch, GenerationJob, ImageFormState, NormalizedImageResult } from '../../types/image'
 import { editImage, generateImage } from './image.api'
 import { getImageSrc, normalizeImageResponse } from './image.adapter'
 
@@ -117,20 +117,38 @@ function toIsoFromPerformanceTime(value?: number) {
   return new Date(Date.now() - Math.max(0, performance.now() - value)).toISOString()
 }
 
-function toHistoryResult(job: GenerationJob): HistoryImageResult {
+const imagePayloadKeys = new Set(['b64_json', 'b64Json', 'partial_image_b64', 'partialImageB64'])
+
+function stripImagePayload(value: unknown, seen = new WeakSet<object>()): unknown {
+  if (!value || typeof value !== 'object') return value
+  if (seen.has(value)) return '[Circular]'
+  seen.add(value)
+
+  if (Array.isArray(value)) return value.map((item) => stripImagePayload(item, seen))
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, item]) => [
+      key,
+      imagePayloadKeys.has(key) ? '[omitted image data]' : stripImagePayload(item, seen),
+    ]),
+  )
+}
+
+export function toHistoryResult(job: GenerationJob): HistoryImageResult {
   return {
     id: job.id,
     jobIndex: job.jobIndex,
     status: job.status,
     url: job.url,
-    b64Json: job.b64Json,
+    b64Json: job.localAssetId ? undefined : job.b64Json,
+    localAssetId: job.localAssetId,
     actualWidth: job.actualWidth,
     actualHeight: job.actualHeight,
     durationMs: job.durationMs || 0,
     startedAt: toIsoFromPerformanceTime(job.startedAt),
     finishedAt: toIsoFromPerformanceTime(job.finishedAt),
     error: job.error,
-    raw: job.raw,
+    raw: stripImagePayload(job.raw),
   }
 }
 
@@ -150,11 +168,37 @@ async function persistBatchHistory(batch: GenerationBatch) {
     results,
     error: batch.failed > 0 && batch.success === 0 ? results.find((item) => item.error)?.error : undefined,
     rawRequest: batch.rawRequest,
-    rawResponse: batch.rawResponse,
+    rawResponse: stripImagePayload(batch.rawResponse),
     notice: batch.notice,
   }
 
   await upsertHistory(history)
+}
+
+async function persistGeneratedImageAsset(
+  result: NormalizedImageResult,
+  actualSize?: { width: number; height: number },
+) {
+  const src = getImageSrc(result)
+  if (!src) return undefined
+
+  try {
+    const response = await fetch(src)
+    const blob = await response.blob()
+    const assetId = createId('asset')
+    const asset: AssetRecord = {
+      id: assetId,
+      blob,
+      mimeType: blob.type || result.mimeType,
+      width: actualSize?.width,
+      height: actualSize?.height,
+      createdAt: nowIso(),
+    }
+    await putAsset(asset)
+    return assetId
+  } catch {
+    return undefined
+  }
 }
 
 async function getImageDimensions(file: File) {
@@ -270,6 +314,7 @@ export function createRestoredBatchFromHistory(record: HistoryRecord): {
       status,
       url: result.url,
       b64Json: result.b64Json,
+      localAssetId: result.localAssetId,
       actualWidth: result.actualWidth,
       actualHeight: result.actualHeight,
       durationMs: result.durationMs,
@@ -329,12 +374,15 @@ async function executeJob(job: RunnerJob) {
 
     const src = getImageSrc(normalized)
     const actualSize = src ? await getActualImageSize(src) : undefined
+    const localAssetId = await persistGeneratedImageAsset(normalized, actualSize)
     const finishedAt = performance.now()
     const batch = useWorkbenchStore.getState().completeJob(
       job.id,
       {
         ...normalized,
-        raw: normalized.raw,
+        b64Json: localAssetId ? undefined : normalized.b64Json,
+        localAssetId,
+        raw: stripImagePayload(normalized.raw),
         finishedAt,
         durationMs: Math.round(finishedAt - startedAt),
         actualWidth: actualSize?.width,
@@ -342,7 +390,7 @@ async function executeJob(job: RunnerJob) {
       },
       {
         rawRequest: response.request,
-        rawResponse: response.raw,
+        rawResponse: stripImagePayload(response.raw),
       },
     )
 

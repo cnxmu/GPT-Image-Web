@@ -1,7 +1,5 @@
-import { db } from '../../db/db'
-import { clearAssets } from '../../db/assets.repo'
 import { clearHistory } from '../../db/history.repo'
-import { clearSecrets } from '../../db/secrets.repo'
+import { clearAllLocalData as clearAllLocalDataFromDb, clearUnreferencedLocalAssets } from '../../db/local-data.repo'
 import { clearTemplates } from '../../db/templates.repo'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -12,8 +10,14 @@ import { SecretFields } from './SecretFields'
 export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   async function clearAllLocalData() {
     if (!confirm('确定清除密钥、模板、历史、资源和设置？此操作不可恢复。')) return
-    await Promise.all([clearSecrets(), clearTemplates(), clearHistory(), clearAssets(), db.settings.clear()])
+    await clearAllLocalDataFromDb()
     onClose()
+  }
+
+  async function cleanupAssets() {
+    if (!confirm('确定清理未被历史记录或 Agent 对话引用的本地资源缓存？')) return
+    const removed = await clearUnreferencedLocalAssets()
+    alert(`已清理 ${removed} 个未引用资源。`)
   }
 
   return (
@@ -38,8 +42,8 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
           <Button type="button" variant="outline" onClick={() => confirm('确定清空历史记录？') && clearHistory()}>
             清空历史与历史图片
           </Button>
-          <Button type="button" variant="outline" onClick={() => confirm('确定清空本地资源缓存？这会删除 Agent 图片和参考图缓存。') && clearAssets()}>
-            清空资源缓存
+          <Button type="button" variant="outline" onClick={cleanupAssets}>
+            清理未引用资源
           </Button>
           <Button type="button" variant="outline" onClick={() => confirm('确定清空模板？') && clearTemplates()}>
             清空模板
