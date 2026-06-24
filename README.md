@@ -117,6 +117,41 @@ npm run lint     # 代码检查
 
 密钥、模板、历史、会话和图片资产都只保存在当前浏览器的 IndexedDB。
 
+## 如何修改 API 端点
+
+当前版本的接口基地址写死在代码里，修改位置是：
+
+[src/lib/constants.ts](E:/Users/cnxmu/Documents/kaifa/生图工作站-网页端/src/lib/constants.ts:1)
+
+关键代码：
+
+```ts
+export const API_BASE_URL = 'https://img.xmu.la'
+```
+
+这个地址会同时影响以下接口：
+
+- `/v1/images/generations`
+- `/v1/images/edits`
+- `/v1/chat/completions`
+- `/v1/responses`
+
+也就是说，你只需要改这一处，文生图、图生图、Nano Banana 和 Agent 对话就都会一起切到新的接口域名。
+
+例如改成：
+
+```ts
+export const API_BASE_URL = 'https://你的接口域名'
+```
+
+修改后需要重新执行：
+
+```bash
+npm run build
+```
+
+如果你已经部署到服务器，还需要把新的 `dist/` 内容重新上传覆盖生产环境文件。
+
 ## 生产部署只需要上传什么
 
 生产环境构建完成后，只需要部署 `dist/` 目录里的内容。
