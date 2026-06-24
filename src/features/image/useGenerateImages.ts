@@ -1,6 +1,15 @@
 import { useMutation } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { getImageSize } from '../../lib/constants'
+import {
+  DEFAULT_NANO_BANANA_MAX_TOKENS,
+  DEFAULT_NANO_BANANA_TEMPERATURE,
+  DEFAULT_NANO_BANANA_TOP_P,
+  getDefaultImageModel,
+  getImageSize,
+  getImageModelFamily,
+  isImageModel,
+  isImageModelFamily,
+} from '../../lib/constants'
 import { AppError, toAppError } from '../../lib/errors'
 import { getActualImageSize } from '../../lib/image-size'
 import { nowIso } from '../../lib/time'
@@ -31,6 +40,8 @@ let schedulerConcurrency = 20
 function snapshotForm(state: ReturnType<typeof useWorkbenchStore.getState>): ImageFormState {
   return {
     mode: state.mode,
+    imageModelFamily: state.imageModelFamily,
+    imageModel: state.imageModel,
     prompt: state.prompt.trim(),
     negativePrompt: state.negativePrompt.trim(),
     aspectRatio: state.aspectRatio,
@@ -41,6 +52,10 @@ function snapshotForm(state: ReturnType<typeof useWorkbenchStore.getState>): Ima
     count: state.count,
     compressionRate: state.compressionRate,
     outputFormat: state.outputFormat,
+    nanoBananaTemperature: state.nanoBananaTemperature,
+    nanoBananaTopP: state.nanoBananaTopP,
+    nanoBananaMaxTokens: state.nanoBananaMaxTokens,
+    nanoBananaSeed: state.nanoBananaSeed,
   }
 }
 
@@ -92,6 +107,8 @@ export function createInitialHistory(batch: GenerationBatch): HistoryRecord {
     prompt: form.prompt,
     negativePrompt: form.negativePrompt || undefined,
     params: {
+      imageModelFamily: form.imageModelFamily,
+      imageModel: form.imageModel,
       aspectRatio: form.aspectRatio,
       resolutionTier: form.resolutionTier,
       size: form.size,
@@ -100,6 +117,10 @@ export function createInitialHistory(batch: GenerationBatch): HistoryRecord {
       count: form.count,
       compressionRate: form.outputFormat === 'png' ? undefined : form.compressionRate,
       outputFormat: form.outputFormat,
+      nanoBananaTemperature: form.nanoBananaTemperature,
+      nanoBananaTopP: form.nanoBananaTopP,
+      nanoBananaMaxTokens: form.nanoBananaMaxTokens,
+      nanoBananaSeed: form.nanoBananaSeed,
     },
     status: 'running',
     total: form.count,
@@ -117,9 +138,24 @@ function toIsoFromPerformanceTime(value?: number) {
   return new Date(Date.now() - Math.max(0, performance.now() - value)).toISOString()
 }
 
-const imagePayloadKeys = new Set(['b64_json', 'b64Json', 'partial_image_b64', 'partialImageB64'])
+const imagePayloadKeys = new Set([
+  'b64_json',
+  'b64Json',
+  'partial_image_b64',
+  'partialImageB64',
+  'base64',
+  'data',
+  'image',
+  'images',
+  'image_url',
+])
+
+function stripImageDataUrls(value: string) {
+  return value.replace(/data:image\/(?:png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=_-]+/gi, '[omitted image data]')
+}
 
 function stripImagePayload(value: unknown, seen = new WeakSet<object>()): unknown {
+  if (typeof value === 'string') return stripImageDataUrls(value)
   if (!value || typeof value !== 'object') return value
   if (seen.has(value)) return '[Circular]'
   seen.add(value)
@@ -274,9 +310,23 @@ async function restoreReferenceFiles(record: HistoryRecord) {
 function formFromHistoryRecord(record: HistoryRecord): ImageFormState {
   const aspectRatio = record.params.aspectRatio as ImageFormState['aspectRatio']
   const resolutionTier = record.params.resolutionTier as ImageFormState['resolutionTier']
+  const historyModel = typeof record.params.imageModel === 'string' && isImageModel(record.params.imageModel)
+    ? record.params.imageModel
+    : undefined
+  const imageModelFamily =
+    typeof record.params.imageModelFamily === 'string' && isImageModelFamily(record.params.imageModelFamily)
+      ? record.params.imageModelFamily
+      : historyModel
+        ? getImageModelFamily(historyModel)
+        : 'gpt-image-2'
+  const imageModel = historyModel && getImageModelFamily(historyModel) === imageModelFamily
+    ? historyModel
+    : getDefaultImageModel(imageModelFamily)
 
   return {
     mode: record.mode,
+    imageModelFamily,
+    imageModel,
     prompt: record.prompt,
     negativePrompt: record.negativePrompt || '',
     aspectRatio,
@@ -287,7 +337,30 @@ function formFromHistoryRecord(record: HistoryRecord): ImageFormState {
     count: record.params.count,
     compressionRate: typeof record.params.compressionRate === 'number' ? record.params.compressionRate : 0.8,
     outputFormat: (record.params.outputFormat || 'png') as ImageFormState['outputFormat'],
+    nanoBananaTemperature:
+      typeof record.params.nanoBananaTemperature === 'number'
+        ? record.params.nanoBananaTemperature
+        : DEFAULT_NANO_BANANA_TEMPERATURE,
+    nanoBananaTopP:
+      typeof record.params.nanoBananaTopP === 'number'
+        ? record.params.nanoBananaTopP
+        : DEFAULT_NANO_BANANA_TOP_P,
+    nanoBananaMaxTokens:
+      typeof record.params.nanoBananaMaxTokens === 'number'
+        ? record.params.nanoBananaMaxTokens
+        : DEFAULT_NANO_BANANA_MAX_TOKENS,
+    nanoBananaSeed:
+      typeof record.params.nanoBananaSeed === 'number' && Number.isFinite(record.params.nanoBananaSeed)
+        ? Math.round(record.params.nanoBananaSeed)
+        : undefined,
   }
+}
+
+async function getImageApiKeyForModel(form: ImageFormState) {
+  const imageKey = (await getSecret('imageApiKey'))?.value?.trim()
+  const bananaKey = (await getSecret('bananaImageApiKey'))?.value?.trim()
+  const apiKey = form.imageModelFamily === 'gpt-image-2' ? imageKey : bananaKey || imageKey
+  return apiKey || ''
 }
 
 export function createRestoredBatchFromHistory(record: HistoryRecord): {
@@ -426,15 +499,14 @@ export async function restoreRunningHistory() {
   if (restoreStarted) return
   restoreStarted = true
 
-  const apiKey = (await getSecret('imageApiKey'))?.value
-  if (!apiKey) return
-
   const records = await db.history.where('status').equals('running').toArray()
   for (const record of records) {
     if (useWorkbenchStore.getState().batches.some((batch) => batch.historyId === record.id)) continue
 
     const { batch, queuedJobIds } = createRestoredBatchFromHistory(record)
     if (queuedJobIds.length === 0) continue
+    const apiKey = await getImageApiKeyForModel(batch.form)
+    if (!apiKey) continue
 
     useWorkbenchStore.getState().restoreBatchFromHistory(batch, queuedJobIds)
 
@@ -500,7 +572,7 @@ export function useGenerateImagesMutation() {
       const store = useWorkbenchStore.getState()
       const form = snapshotForm(store)
       const referenceImages = store.referenceImages.map((item) => item.file)
-      const apiKey = (await getSecret('imageApiKey'))?.value
+      const apiKey = await getImageApiKeyForModel(form)
 
       if (!apiKey) throw new AppError('MISSING_IMAGE_API_KEY', '请先在个人设置中保存生图 API Key')
       validateForm(form, referenceImages)

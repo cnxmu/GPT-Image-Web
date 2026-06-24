@@ -1,6 +1,13 @@
 import {
   DEFAULT_COMPRESSION_RATE,
+  DEFAULT_NANO_BANANA_MAX_TOKENS,
+  DEFAULT_NANO_BANANA_TEMPERATURE,
+  DEFAULT_NANO_BANANA_TOP_P,
+  getDefaultImageModel,
   getImageSize,
+  getImageModelFamily,
+  isImageModel,
+  isImageModelFamily,
   isAspectRatio,
   isImageQuality,
   isModerationLevel,
@@ -25,6 +32,8 @@ export interface AgentActionChange {
 export function formSnapshotFromStore(state: WorkbenchState): ImageFormState {
   return {
     mode: state.mode,
+    imageModelFamily: state.imageModelFamily,
+    imageModel: state.imageModel,
     prompt: state.prompt.trim(),
     negativePrompt: state.negativePrompt.trim(),
     aspectRatio: state.aspectRatio,
@@ -35,6 +44,10 @@ export function formSnapshotFromStore(state: WorkbenchState): ImageFormState {
     count: state.count,
     compressionRate: state.compressionRate,
     outputFormat: state.outputFormat,
+    nanoBananaTemperature: state.nanoBananaTemperature,
+    nanoBananaTopP: state.nanoBananaTopP,
+    nanoBananaMaxTokens: state.nanoBananaMaxTokens,
+    nanoBananaSeed: state.nanoBananaSeed,
   }
 }
 
@@ -59,6 +72,7 @@ export function getActionTemplateDraft(action: AgentProposedAction, state: Workb
   const patch = getActionFormPatch(action)
   const aspectRatio = patch.aspectRatio || state.aspectRatio
   const resolutionTier = patch.resolutionTier || state.resolutionTier
+  const { imageModelFamily, imageModel } = resolveImageModelPatch(patch, state)
   const now = nowIso()
   const name = typeof payload.name === 'string' && payload.name.trim()
     ? payload.name.trim()
@@ -71,6 +85,8 @@ export function getActionTemplateDraft(action: AgentProposedAction, state: Workb
     name,
     description: description || undefined,
     mode: patch.mode || state.mode,
+    imageModelFamily,
+    imageModel,
     prompt: patch.prompt ?? state.prompt,
     negativePrompt: (patch.negativePrompt ?? state.negativePrompt) || undefined,
     aspectRatio,
@@ -81,6 +97,10 @@ export function getActionTemplateDraft(action: AgentProposedAction, state: Workb
     count: patch.count ?? state.count,
     compressionRate: patch.compressionRate ?? state.compressionRate,
     outputFormat: patch.outputFormat || state.outputFormat,
+    nanoBananaTemperature: patch.nanoBananaTemperature ?? state.nanoBananaTemperature,
+    nanoBananaTopP: patch.nanoBananaTopP ?? state.nanoBananaTopP,
+    nanoBananaMaxTokens: patch.nanoBananaMaxTokens ?? state.nanoBananaMaxTokens,
+    nanoBananaSeed: patch.nanoBananaSeed ?? state.nanoBananaSeed,
     createdAt: now,
     updatedAt: now,
   }
@@ -105,6 +125,8 @@ export function getFormPatchChanges(patch: AgentFormPatch, state: WorkbenchState
 
 export function applyFormPatch(patch: AgentFormPatch, state: WorkbenchState) {
   if (patch.mode) state.setMode(patch.mode)
+  if (patch.imageModel) state.setImageModel(patch.imageModel)
+  else if (patch.imageModelFamily) state.setImageModelFamily(patch.imageModelFamily)
   if (patch.prompt !== undefined) state.setPrompt(patch.prompt)
   if (patch.negativePrompt !== undefined) state.setNegativePrompt(patch.negativePrompt)
   if (patch.aspectRatio) state.setAspectRatio(patch.aspectRatio)
@@ -114,11 +136,39 @@ export function applyFormPatch(patch: AgentFormPatch, state: WorkbenchState) {
   if (patch.count !== undefined) state.setCount(patch.count)
   if (patch.compressionRate !== undefined) state.setCompressionRate(patch.compressionRate)
   if (patch.outputFormat) state.setOutputFormat(patch.outputFormat)
+  if (patch.nanoBananaTemperature !== undefined) state.setNanoBananaTemperature(patch.nanoBananaTemperature)
+  if (patch.nanoBananaTopP !== undefined) state.setNanoBananaTopP(patch.nanoBananaTopP)
+  if (patch.nanoBananaMaxTokens !== undefined) state.setNanoBananaMaxTokens(patch.nanoBananaMaxTokens)
+  if (patch.nanoBananaSeed !== undefined) state.setNanoBananaSeed(patch.nanoBananaSeed)
+}
+
+function resolveImageModelPatch(patch: AgentFormPatch, state: WorkbenchState) {
+  if (patch.imageModel) {
+    return {
+      imageModel: patch.imageModel,
+      imageModelFamily: getImageModelFamily(patch.imageModel),
+    }
+  }
+
+  if (patch.imageModelFamily) {
+    return {
+      imageModelFamily: patch.imageModelFamily,
+      imageModel: getDefaultImageModel(patch.imageModelFamily),
+    }
+  }
+
+  return {
+    imageModelFamily: state.imageModelFamily,
+    imageModel: state.imageModel,
+  }
 }
 
 export function templateToFormPatch(template: TemplateRecord): AgentFormPatch {
+  const imageModel = template.imageModel || 'gpt-image-2'
   return {
     mode: template.mode,
+    imageModelFamily: template.imageModelFamily || getImageModelFamily(imageModel),
+    imageModel,
     prompt: template.prompt,
     negativePrompt: template.negativePrompt || '',
     aspectRatio: template.aspectRatio,
@@ -128,12 +178,18 @@ export function templateToFormPatch(template: TemplateRecord): AgentFormPatch {
     count: template.count,
     compressionRate: template.compressionRate,
     outputFormat: template.outputFormat,
+    nanoBananaTemperature: template.nanoBananaTemperature ?? DEFAULT_NANO_BANANA_TEMPERATURE,
+    nanoBananaTopP: template.nanoBananaTopP ?? DEFAULT_NANO_BANANA_TOP_P,
+    nanoBananaMaxTokens: template.nanoBananaMaxTokens ?? DEFAULT_NANO_BANANA_MAX_TOKENS,
+    nanoBananaSeed: template.nanoBananaSeed,
   }
 }
 
 export function historyToFormPatch(record: HistoryRecord): AgentFormPatch {
   return sanitizeFormPatch({
     mode: record.mode,
+    imageModelFamily: record.params.imageModelFamily,
+    imageModel: record.params.imageModel,
     prompt: record.prompt,
     negativePrompt: record.negativePrompt || '',
     aspectRatio: record.params.aspectRatio,
@@ -143,6 +199,10 @@ export function historyToFormPatch(record: HistoryRecord): AgentFormPatch {
     count: record.params.count,
     compressionRate: record.params.compressionRate ?? DEFAULT_COMPRESSION_RATE,
     outputFormat: record.params.outputFormat,
+    nanoBananaTemperature: record.params.nanoBananaTemperature,
+    nanoBananaTopP: record.params.nanoBananaTopP,
+    nanoBananaMaxTokens: record.params.nanoBananaMaxTokens,
+    nanoBananaSeed: record.params.nanoBananaSeed,
   })
 }
 
@@ -153,6 +213,12 @@ function sanitizeFormPatch(value: unknown): AgentFormPatch {
   const patch: AgentFormPatch = {}
 
   if (raw.mode === 'generation' || raw.mode === 'edit') patch.mode = raw.mode
+  if (typeof raw.imageModelFamily === 'string' && isImageModelFamily(raw.imageModelFamily)) {
+    patch.imageModelFamily = raw.imageModelFamily
+  }
+  if (typeof raw.imageModel === 'string' && isImageModel(raw.imageModel)) {
+    patch.imageModel = raw.imageModel
+  }
   if (typeof raw.prompt === 'string') patch.prompt = raw.prompt
   if (typeof raw.negativePrompt === 'string') patch.negativePrompt = raw.negativePrompt
   if (typeof raw.aspectRatio === 'string' && isAspectRatio(raw.aspectRatio)) patch.aspectRatio = raw.aspectRatio
@@ -166,6 +232,18 @@ function sanitizeFormPatch(value: unknown): AgentFormPatch {
     patch.compressionRate = Math.max(0.1, Math.min(1, raw.compressionRate))
   }
   if (typeof raw.outputFormat === 'string' && isOutputFormat(raw.outputFormat)) patch.outputFormat = raw.outputFormat
+  if (typeof raw.nanoBananaTemperature === 'number' && Number.isFinite(raw.nanoBananaTemperature)) {
+    patch.nanoBananaTemperature = Math.max(0, Math.min(2, raw.nanoBananaTemperature))
+  }
+  if (typeof raw.nanoBananaTopP === 'number' && Number.isFinite(raw.nanoBananaTopP)) {
+    patch.nanoBananaTopP = Math.max(0, Math.min(1, raw.nanoBananaTopP))
+  }
+  if (typeof raw.nanoBananaMaxTokens === 'number' && Number.isFinite(raw.nanoBananaMaxTokens)) {
+    patch.nanoBananaMaxTokens = Math.max(1, Math.round(raw.nanoBananaMaxTokens))
+  }
+  if (typeof raw.nanoBananaSeed === 'number' && Number.isFinite(raw.nanoBananaSeed)) {
+    patch.nanoBananaSeed = Math.round(raw.nanoBananaSeed)
+  }
 
   return patch
 }
@@ -178,12 +256,16 @@ function getStateFieldValue(state: WorkbenchState, field: keyof AgentFormPatch) 
 function formatValue(field: keyof AgentFormPatch, value: AgentFormPatch[keyof AgentFormPatch] | WorkbenchState[keyof WorkbenchState]) {
   if (field === 'mode') return value === 'edit' ? '图生图' : '文生图'
   if (field === 'compressionRate' && typeof value === 'number') return `${Math.round(value * 100)}%`
+  if (field === 'nanoBananaTemperature' && typeof value === 'number') return String(value)
+  if (field === 'nanoBananaTopP' && typeof value === 'number') return String(value)
   if (value === undefined || value === '') return '空'
   return String(value)
 }
 
 const FIELD_LABELS: Record<keyof AgentFormPatch, string> = {
   mode: '模式',
+  imageModelFamily: '生图模型',
+  imageModel: '详细模型',
   prompt: '提示词',
   negativePrompt: '负面提示词',
   aspectRatio: '构图比例',
@@ -193,4 +275,8 @@ const FIELD_LABELS: Record<keyof AgentFormPatch, string> = {
   count: '数量',
   compressionRate: '压缩率',
   outputFormat: '输出格式',
+  nanoBananaTemperature: '采样温度',
+  nanoBananaTopP: '核采样',
+  nanoBananaMaxTokens: '最大 Token',
+  nanoBananaSeed: '采样种子',
 }

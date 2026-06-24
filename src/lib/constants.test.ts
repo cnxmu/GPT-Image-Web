@@ -6,10 +6,15 @@ import {
   DEFAULT_AGENT_MODEL,
   DEFAULT_GENERATION_CONCURRENCY,
   IMAGE_MODEL,
+  IMAGE_MODEL_FAMILIES,
+  IMAGE_MODELS,
   IMAGE_SIZE_MATRIX,
   MAX_GENERATION_CONCURRENCY,
   MIN_GENERATION_CONCURRENCY,
   RESOLUTION_TIERS,
+  getDefaultImageModel,
+  getImageModelFamily,
+  getImageModelOptions,
   getImageSize,
   getOutputCompression,
   isImageSizeMatched,
@@ -37,8 +42,37 @@ describe('image size matrix', () => {
 describe('models', () => {
   it('uses the configured image and agent models', () => {
     expect(IMAGE_MODEL).toBe('gpt-image-2')
+    expect(IMAGE_MODEL_FAMILIES).toEqual(['gpt-image-2', 'nano-banana-2', 'nano-banana-pro'])
+    expect(IMAGE_MODELS).toEqual([
+      'gpt-image-2',
+      'nano-banana-2',
+      'nano-banana-2-1K',
+      'nano-banana-2-2K',
+      'nano-banana-2-4K',
+      'nano-banana-pro-1K',
+      'nano-banana-pro-2K',
+      'nano-banana-pro-4K',
+    ])
     expect(AGENT_MODELS).toEqual(['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini'])
     expect(DEFAULT_AGENT_MODEL).toBe('gpt-5.5')
+  })
+
+  it('maps model families to detailed model choices', () => {
+    expect(getImageModelOptions('gpt-image-2')).toEqual(['gpt-image-2'])
+    expect(getImageModelOptions('nano-banana-2')).toEqual([
+      'nano-banana-2',
+      'nano-banana-2-1K',
+      'nano-banana-2-2K',
+      'nano-banana-2-4K',
+    ])
+    expect(getImageModelOptions('nano-banana-pro')).toEqual([
+      'nano-banana-pro-1K',
+      'nano-banana-pro-2K',
+      'nano-banana-pro-4K',
+    ])
+    expect(getDefaultImageModel('nano-banana-pro')).toBe('nano-banana-pro-1K')
+    expect(getImageModelFamily('nano-banana-2-4K')).toBe('nano-banana-2')
+    expect(getImageModelFamily('nano-banana-pro-4K')).toBe('nano-banana-pro')
   })
 })
 

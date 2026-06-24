@@ -62,7 +62,7 @@ function BatchResult({
             {batch.source === 'history' ? <Badge variant="outline">我的历史结果</Badge> : null}
             <StatusBadge status={batch.status} />
             <h3 className="text-sm font-semibold">
-              {batch.form.mode === 'generation' ? '文生图' : '图生图'} · {batch.form.size} · {batch.form.outputFormat.toUpperCase()}
+              {getBatchTitle(batch)}
             </h3>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -80,6 +80,14 @@ function BatchResult({
       </div>
     </section>
   )
+}
+
+function getBatchTitle(batch: GenerationBatch) {
+  const mode = batch.form.mode === 'generation' ? '文生图' : '图生图'
+  if (batch.form.imageModelFamily !== 'gpt-image-2') {
+    return `${mode} · ${batch.form.imageModel} · ${batch.form.aspectRatio}`
+  }
+  return `${mode} · ${batch.form.size} · ${batch.form.outputFormat.toUpperCase()}`
 }
 
 function JobCard({

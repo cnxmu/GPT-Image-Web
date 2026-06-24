@@ -11,11 +11,14 @@ import { Field } from '../workbench/field'
 export function SecretFields() {
   const secrets = useLiveQuery(() => db.secrets.toArray(), [], [])
   const imageSecret = secrets.find((item) => item.id === 'imageApiKey')?.value || ''
+  const bananaSecret = secrets.find((item) => item.id === 'bananaImageApiKey')?.value || ''
   const agentSecret = secrets.find((item) => item.id === 'agentApiKey')?.value || ''
   const [imageApiKey, setImageApiKey] = useState<string | undefined>()
+  const [bananaImageApiKey, setBananaImageApiKey] = useState<string | undefined>()
   const [agentApiKey, setAgentApiKey] = useState<string | undefined>()
   const [visible, setVisible] = useState(false)
   const currentImageApiKey = imageApiKey ?? imageSecret
+  const currentBananaImageApiKey = bananaImageApiKey ?? bananaSecret
   const currentAgentApiKey = agentApiKey ?? agentSecret
 
   return (
@@ -28,6 +31,14 @@ export function SecretFields() {
         onChange={setImageApiKey}
       />
       <SecretField
+        id="bananaImageApiKey"
+        label="Nano Banana API Key（可选）"
+        value={currentBananaImageApiKey}
+        visible={visible}
+        hint="留空时，nano-banana-2 和 nano-banana-pro 会使用上面的生图 API Key。"
+        onChange={setBananaImageApiKey}
+      />
+      <SecretField
         id="agentApiKey"
         label="Agent API Key"
         value={currentAgentApiKey}
@@ -37,7 +48,13 @@ export function SecretFields() {
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
-          onClick={() => Promise.all([setSecret('imageApiKey', currentImageApiKey.trim()), setSecret('agentApiKey', currentAgentApiKey.trim())])}
+          onClick={() =>
+            Promise.all([
+              setSecret('imageApiKey', currentImageApiKey.trim()),
+              setSecret('bananaImageApiKey', currentBananaImageApiKey.trim()),
+              setSecret('agentApiKey', currentAgentApiKey.trim()),
+            ])
+          }
         >
           保存密钥
         </Button>
@@ -48,7 +65,10 @@ export function SecretFields() {
         <Button
           type="button"
           variant="destructive"
-          onClick={() => confirm('确定清除全部密钥？') && Promise.all([deleteSecret('imageApiKey'), deleteSecret('agentApiKey')])}
+          onClick={() =>
+            confirm('确定清除全部密钥？') &&
+            Promise.all([deleteSecret('imageApiKey'), deleteSecret('bananaImageApiKey'), deleteSecret('agentApiKey')])
+          }
         >
           <Trash2 className="h-4 w-4" />
           清除密钥
@@ -63,16 +83,18 @@ function SecretField({
   label,
   value,
   visible,
+  hint,
   onChange,
 }: {
   id: SecretRecord['id']
   label: string
   value: string
   visible: boolean
+  hint?: string
   onChange: (value: string) => void
 }) {
   return (
-    <Field label={label}>
+    <Field label={label} hint={hint}>
       <div className="flex gap-2">
         <Input
           type={visible ? 'text' : 'password'}

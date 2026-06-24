@@ -42,5 +42,12 @@ export function createHttpError(status: number, message: string) {
   if (status === 429) {
     return new AppError('RATE_LIMIT', `请求过于频繁，请稍后重试或降低数量${message ? `。接口返回：${message}` : ''}`, status)
   }
+  if (status === 524) {
+    return new AppError(
+      'API_ERROR',
+      `接口返回 524，通常表示中转站等待上游模型响应超时。${message ? `接口返回：${message}。` : ''}可以稍后重试，或先降低数量、减少参考图、选择更低的 Nano Banana 详细模型。`,
+      status,
+    )
+  }
   return new AppError('API_ERROR', `接口请求失败：${status}${message ? `。接口返回：${message}` : ''}`, status)
 }

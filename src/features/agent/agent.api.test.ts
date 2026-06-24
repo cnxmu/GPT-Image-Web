@@ -3,6 +3,8 @@ import { parseAgentChatResponse, parseOptimizedPromptCandidate, sendAgentChatMes
 
 const formSnapshot = {
   mode: 'generation',
+  imageModelFamily: 'gpt-image-2',
+  imageModel: 'gpt-image-2',
   prompt: '提示词',
   negativePrompt: '',
   aspectRatio: '1:1',
@@ -13,6 +15,10 @@ const formSnapshot = {
   count: 1,
   compressionRate: 0.8,
   outputFormat: 'png',
+  nanoBananaTemperature: 1,
+  nanoBananaTopP: 1,
+  nanoBananaMaxTokens: 1024,
+  nanoBananaSeed: undefined,
 } as const
 
 afterEach(() => {

@@ -5,6 +5,8 @@ import { createBatch, createInitialHistory, createRestoredBatchFromHistory, toHi
 
 const form: ImageFormState = {
   mode: 'generation',
+  imageModelFamily: 'gpt-image-2',
+  imageModel: 'gpt-image-2',
   prompt: 'test',
   negativePrompt: '',
   aspectRatio: '1:1',
@@ -15,6 +17,10 @@ const form: ImageFormState = {
   count: 3,
   compressionRate: 0.8,
   outputFormat: 'png',
+  nanoBananaTemperature: 1,
+  nanoBananaTopP: 1,
+  nanoBananaMaxTokens: 1024,
+  nanoBananaSeed: undefined,
 }
 
 function historyRecord(): HistoryRecord {
@@ -23,6 +29,8 @@ function historyRecord(): HistoryRecord {
     mode: 'generation',
     prompt: '恢复测试',
     params: {
+      imageModelFamily: 'nano-banana-2',
+      imageModel: 'nano-banana-2-2K',
       aspectRatio: '1:1',
       resolutionTier: '1K',
       size: '1024x1024',
@@ -70,6 +78,10 @@ describe('generation history persistence', () => {
     const history = createInitialHistory(batch)
 
     expect(history.status).toBe('running')
+    expect(history.params).toMatchObject({
+      imageModelFamily: 'gpt-image-2',
+      imageModel: 'gpt-image-2',
+    })
     expect(history.results).toHaveLength(3)
     expect(history.results.map((item) => item.status)).toEqual(['queued', 'queued', 'queued'])
     expect(history.results.map((item) => item.jobIndex)).toEqual([0, 1, 2])
@@ -79,6 +91,7 @@ describe('generation history persistence', () => {
     const { batch, queuedJobIds } = createRestoredBatchFromHistory(historyRecord())
 
     expect(batch.historyId).toBe('history-a')
+    expect(batch.form.imageModel).toBe('nano-banana-2-2K')
     expect(batch.results.map((item) => item.status)).toEqual(['success', 'queued', 'failed'])
     expect(batch.results[0].localAssetId).toBe('asset-ok')
     expect(queuedJobIds).toEqual([batch.results[1].id])

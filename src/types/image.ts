@@ -1,5 +1,7 @@
 import type {
   AspectRatio,
+  ImageModel,
+  ImageModelFamily,
   ImageQuality,
   ImageSize,
   ModerationLevel,
@@ -18,6 +20,8 @@ export interface GenerationStats {
 
 export interface ImageFormState {
   mode: WorkbenchMode
+  imageModelFamily: ImageModelFamily
+  imageModel: ImageModel
   prompt: string
   negativePrompt: string
   aspectRatio: AspectRatio
@@ -28,6 +32,10 @@ export interface ImageFormState {
   count: number
   compressionRate: number
   outputFormat: OutputFormat
+  nanoBananaTemperature: number
+  nanoBananaTopP: number
+  nanoBananaMaxTokens: number
+  nanoBananaSeed?: number
 }
 
 export interface ReferenceImagePreview {

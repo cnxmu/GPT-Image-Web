@@ -15,7 +15,7 @@ export function AgentModelField() {
     }, []) || DEFAULT_AGENT_MODEL
 
   return (
-    <Field label="Agent 模型" hint="用于提示词优化请求，生图模型固定为 gpt-image-2。">
+    <Field label="Agent 模型" hint="用于提示词优化和个人 Agent 对话，不影响右侧选择的生图模型。">
       <Select value={model} onValueChange={(value) => setAgentModel(value as AgentModel)}>
         <SelectTrigger className="w-full">
           <SelectValue />

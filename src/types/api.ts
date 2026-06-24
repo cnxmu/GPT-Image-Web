@@ -1,6 +1,8 @@
 import type {
   AgentModel,
   AspectRatio,
+  ImageModel,
+  ImageModelFamily,
   ImageQuality,
   ImageSize,
   ModerationLevel,
@@ -42,6 +44,8 @@ export type AgentActionStatus = 'pending' | 'applied' | 'generated' | 'shown' | 
 
 export interface AgentFormPatch {
   mode?: WorkbenchMode
+  imageModelFamily?: ImageModelFamily
+  imageModel?: ImageModel
   prompt?: string
   negativePrompt?: string
   aspectRatio?: AspectRatio
@@ -51,6 +55,10 @@ export interface AgentFormPatch {
   count?: number
   compressionRate?: number
   outputFormat?: OutputFormat
+  nanoBananaTemperature?: number
+  nanoBananaTopP?: number
+  nanoBananaMaxTokens?: number
+  nanoBananaSeed?: number
 }
 
 export type AgentActionPayload = Record<string, unknown>
@@ -99,7 +107,7 @@ export interface AgentConversationRecord {
 }
 
 export interface SecretRecord {
-  id: 'imageApiKey' | 'agentApiKey'
+  id: 'imageApiKey' | 'bananaImageApiKey' | 'agentApiKey'
   value: string
   updatedAt: string
 }

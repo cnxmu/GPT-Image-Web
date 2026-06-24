@@ -6,6 +6,8 @@ import type { HistoryRecord } from '../types/history'
 function form(count: number): ImageFormState {
   return {
     mode: 'generation',
+    imageModelFamily: 'gpt-image-2',
+    imageModel: 'gpt-image-2',
     prompt: 'test',
     negativePrompt: '',
     aspectRatio: '1:1',
@@ -16,6 +18,10 @@ function form(count: number): ImageFormState {
     count,
     compressionRate: 0.8,
     outputFormat: 'png',
+    nanoBananaTemperature: 1,
+    nanoBananaTopP: 1,
+    nanoBananaMaxTokens: 1024,
+    nanoBananaSeed: undefined,
   }
 }
 
@@ -49,6 +55,8 @@ function historyRecord(id: string): HistoryRecord {
     prompt: '历史提示词',
     negativePrompt: '历史负面词',
     params: {
+      imageModelFamily: 'nano-banana-pro',
+      imageModel: 'nano-banana-pro-4K',
       aspectRatio: '16:9',
       resolutionTier: '1K',
       size: '1920x1080',
@@ -213,6 +221,8 @@ describe('workbench generation queue', () => {
     expect(useWorkbenchStore.getState()).toMatchObject({
       prompt: '历史提示词',
       negativePrompt: '历史负面词',
+      imageModelFamily: 'nano-banana-pro',
+      imageModel: 'nano-banana-pro-4K',
       aspectRatio: '16:9',
       resolutionTier: '1K',
       size: '1920x1080',

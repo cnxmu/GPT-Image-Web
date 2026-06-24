@@ -1,5 +1,7 @@
 import type {
   AspectRatio,
+  ImageModel,
+  ImageModelFamily,
   ImageQuality,
   ImageSize,
   ModerationLevel,
@@ -14,6 +16,8 @@ export interface TemplateRecord {
   name: string
   description?: string
   mode: WorkbenchMode
+  imageModelFamily?: ImageModelFamily
+  imageModel?: ImageModel
   prompt: string
   negativePrompt?: string
   aspectRatio: AspectRatio
@@ -24,6 +28,10 @@ export interface TemplateRecord {
   count: number
   compressionRate: number
   outputFormat: OutputFormat
+  nanoBananaTemperature?: number
+  nanoBananaTopP?: number
+  nanoBananaMaxTokens?: number
+  nanoBananaSeed?: number
   createdAt: string
   updatedAt: string
 }

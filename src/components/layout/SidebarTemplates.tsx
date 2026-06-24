@@ -31,6 +31,8 @@ export function SidebarTemplates() {
       name: name.trim() || `我的模板 ${new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`,
       description: description.trim() || undefined,
       mode: state.mode,
+      imageModelFamily: state.imageModelFamily,
+      imageModel: state.imageModel,
       prompt: state.prompt,
       negativePrompt: state.negativePrompt || undefined,
       aspectRatio: state.aspectRatio,
@@ -41,6 +43,10 @@ export function SidebarTemplates() {
       count: state.count,
       compressionRate: state.compressionRate,
       outputFormat: state.outputFormat,
+      nanoBananaTemperature: state.nanoBananaTemperature,
+      nanoBananaTopP: state.nanoBananaTopP,
+      nanoBananaMaxTokens: state.nanoBananaMaxTokens,
+      nanoBananaSeed: state.nanoBananaSeed,
       createdAt: now,
       updatedAt: now,
     }
@@ -125,7 +131,7 @@ function TemplateCard({
             {template.source === 'system' ? <Badge variant="outline">内置预设</Badge> : null}
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            {template.mode === 'generation' ? '文生图' : '图生图'} · {template.aspectRatio} · {template.resolutionTier} · {template.size}
+            {template.mode === 'generation' ? '文生图' : '图生图'} · {template.imageModel || 'gpt-image-2'} · {template.aspectRatio} · {template.resolutionTier} · {template.size}
           </p>
         </button>
         {template.source === 'system' ? null : (

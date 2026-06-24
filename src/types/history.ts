@@ -32,6 +32,8 @@ export interface HistoryRecord {
   prompt: string
   negativePrompt?: string
   params: {
+    imageModelFamily?: string
+    imageModel?: string
     aspectRatio: string
     resolutionTier: string
     size: string
@@ -40,6 +42,10 @@ export interface HistoryRecord {
     count: number
     compressionRate?: number
     outputFormat?: string
+    nanoBananaTemperature?: number
+    nanoBananaTopP?: number
+    nanoBananaMaxTokens?: number
+    nanoBananaSeed?: number
   }
   status: 'pending' | 'running' | 'success' | 'failed' | 'partial'
   total: number

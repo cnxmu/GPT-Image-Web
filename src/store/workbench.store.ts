@@ -1,15 +1,30 @@
 import { create } from 'zustand'
 import {
   DEFAULT_COMPRESSION_RATE,
+  DEFAULT_NANO_BANANA_MAX_TOKENS,
+  DEFAULT_NANO_BANANA_TEMPERATURE,
+  DEFAULT_NANO_BANANA_TOP_P,
+  IMAGE_MODEL,
   getImageSize,
+  getDefaultImageModel,
+  getImageModelFamily,
   isAspectRatio,
+  isImageModel,
+  isImageModelFamily,
   isImageQuality,
   isModerationLevel,
   isOutputFormat,
   isResolutionTier,
   MAX_IMAGE_COUNT,
   MIN_IMAGE_COUNT,
+  MIN_NANO_BANANA_MAX_TOKENS,
+  MIN_NANO_BANANA_TEMPERATURE,
+  MIN_NANO_BANANA_TOP_P,
+  MAX_NANO_BANANA_TEMPERATURE,
+  MAX_NANO_BANANA_TOP_P,
   type AspectRatio,
+  type ImageModel,
+  type ImageModelFamily,
   type ImageQuality,
   type ModerationLevel,
   type OutputFormat,
@@ -24,6 +39,8 @@ import type { TemplateRecord } from '../types/template'
 
 export interface WorkbenchState {
   mode: WorkbenchMode
+  imageModelFamily: ImageModelFamily
+  imageModel: ImageModel
   prompt: string
   negativePrompt: string
   aspectRatio: AspectRatio
@@ -34,6 +51,10 @@ export interface WorkbenchState {
   count: number
   compressionRate: number
   outputFormat: OutputFormat
+  nanoBananaTemperature: number
+  nanoBananaTopP: number
+  nanoBananaMaxTokens: number
+  nanoBananaSeed?: number
   referenceImages: ReferenceImagePreview[]
   batches: GenerationBatch[]
   visibleBatchIds: string[]
@@ -41,6 +62,8 @@ export interface WorkbenchState {
   activeJobCount: number
   error?: string
   setMode: (mode: WorkbenchMode) => void
+  setImageModelFamily: (family: ImageModelFamily) => void
+  setImageModel: (model: ImageModel) => void
   setPrompt: (prompt: string) => void
   setNegativePrompt: (negativePrompt: string) => void
   setAspectRatio: (aspectRatio: AspectRatio) => void
@@ -50,6 +73,10 @@ export interface WorkbenchState {
   setCount: (count: number) => void
   setCompressionRate: (compressionRate: number) => void
   setOutputFormat: (outputFormat: OutputFormat) => void
+  setNanoBananaTemperature: (temperature: number) => void
+  setNanoBananaTopP: (topP: number) => void
+  setNanoBananaMaxTokens: (maxTokens: number) => void
+  setNanoBananaSeed: (seed?: number) => void
   addReferenceFiles: (files: File[]) => void
   removeReferenceImage: (id: string) => void
   clearReferenceImages: () => void
@@ -80,6 +107,8 @@ function clampCount(count: number) {
 
 function formFromHistory(record: HistoryRecord): {
   mode: WorkbenchMode
+  imageModelFamily: ImageModelFamily
+  imageModel: ImageModel
   prompt: string
   negativePrompt: string
   aspectRatio: AspectRatio
@@ -90,7 +119,23 @@ function formFromHistory(record: HistoryRecord): {
   count: number
   compressionRate: number
   outputFormat: OutputFormat
+  nanoBananaTemperature: number
+  nanoBananaTopP: number
+  nanoBananaMaxTokens: number
+  nanoBananaSeed?: number
 } {
+  const historyModel = typeof record.params.imageModel === 'string' && isImageModel(record.params.imageModel)
+    ? record.params.imageModel
+    : undefined
+  const imageModelFamily =
+    typeof record.params.imageModelFamily === 'string' && isImageModelFamily(record.params.imageModelFamily)
+      ? record.params.imageModelFamily
+      : historyModel
+        ? getImageModelFamily(historyModel)
+        : 'gpt-image-2'
+  const imageModel = historyModel && getImageModelFamily(historyModel) === imageModelFamily
+    ? historyModel
+    : getDefaultImageModel(imageModelFamily)
   const aspectRatio = isAspectRatio(record.params.aspectRatio) ? record.params.aspectRatio : defaultAspectRatio
   const resolutionTier = isResolutionTier(record.params.resolutionTier)
     ? record.params.resolutionTier
@@ -98,6 +143,8 @@ function formFromHistory(record: HistoryRecord): {
   const outputFormat = record.params.outputFormat && isOutputFormat(record.params.outputFormat) ? record.params.outputFormat : 'png'
   return {
     mode: record.mode,
+    imageModelFamily,
+    imageModel,
     prompt: record.prompt,
     negativePrompt: record.negativePrompt || '',
     aspectRatio,
@@ -111,7 +158,34 @@ function formFromHistory(record: HistoryRecord): {
         ? record.params.compressionRate
         : DEFAULT_COMPRESSION_RATE,
     outputFormat,
+    nanoBananaTemperature: clampNanoBananaTemperature(record.params.nanoBananaTemperature),
+    nanoBananaTopP: clampNanoBananaTopP(record.params.nanoBananaTopP),
+    nanoBananaMaxTokens: clampNanoBananaMaxTokens(record.params.nanoBananaMaxTokens),
+    nanoBananaSeed: normalizeOptionalInteger(record.params.nanoBananaSeed),
   }
+}
+
+function clampNanoBananaTemperature(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.max(MIN_NANO_BANANA_TEMPERATURE, Math.min(MAX_NANO_BANANA_TEMPERATURE, value))
+    : DEFAULT_NANO_BANANA_TEMPERATURE
+}
+
+function clampNanoBananaTopP(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.max(MIN_NANO_BANANA_TOP_P, Math.min(MAX_NANO_BANANA_TOP_P, value))
+    : DEFAULT_NANO_BANANA_TOP_P
+}
+
+function clampNanoBananaMaxTokens(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.max(MIN_NANO_BANANA_MAX_TOKENS, Math.round(value))
+    : DEFAULT_NANO_BANANA_MAX_TOKENS
+}
+
+function normalizeOptionalInteger(value: unknown) {
+  if (value === undefined || value === null || value === '') return undefined
+  return typeof value === 'number' && Number.isFinite(value) ? Math.round(value) : undefined
 }
 
 function historyToBatch(record: HistoryRecord): GenerationBatch | undefined {
@@ -230,6 +304,8 @@ export function getGenerationBatchStats(batches: GenerationBatch[], now = perfor
 
 export const useWorkbenchStore = create<WorkbenchState>((set, get) => ({
   mode: 'generation',
+  imageModelFamily: 'gpt-image-2',
+  imageModel: IMAGE_MODEL,
   prompt: '',
   negativePrompt: '',
   aspectRatio: defaultAspectRatio,
@@ -240,12 +316,26 @@ export const useWorkbenchStore = create<WorkbenchState>((set, get) => ({
   count: 1,
   compressionRate: DEFAULT_COMPRESSION_RATE,
   outputFormat: 'png',
+  nanoBananaTemperature: DEFAULT_NANO_BANANA_TEMPERATURE,
+  nanoBananaTopP: DEFAULT_NANO_BANANA_TOP_P,
+  nanoBananaMaxTokens: DEFAULT_NANO_BANANA_MAX_TOKENS,
+  nanoBananaSeed: undefined,
   referenceImages: [],
   batches: [],
   visibleBatchIds: [],
   queue: [],
   activeJobCount: 0,
   setMode: (mode) => set({ mode }),
+  setImageModelFamily: (imageModelFamily) =>
+    set({
+      imageModelFamily,
+      imageModel: getDefaultImageModel(imageModelFamily),
+    }),
+  setImageModel: (imageModel) =>
+    set({
+      imageModel,
+      imageModelFamily: getImageModelFamily(imageModel),
+    }),
   setPrompt: (prompt) => set({ prompt }),
   setNegativePrompt: (negativePrompt) => set({ negativePrompt }),
   setAspectRatio: (aspectRatio) =>
@@ -263,6 +353,12 @@ export const useWorkbenchStore = create<WorkbenchState>((set, get) => ({
   setCount: (count) => set({ count: clampCount(count) }),
   setCompressionRate: (compressionRate) => set({ compressionRate }),
   setOutputFormat: (outputFormat) => set({ outputFormat }),
+  setNanoBananaTemperature: (nanoBananaTemperature) =>
+    set({ nanoBananaTemperature: clampNanoBananaTemperature(nanoBananaTemperature) }),
+  setNanoBananaTopP: (nanoBananaTopP) => set({ nanoBananaTopP: clampNanoBananaTopP(nanoBananaTopP) }),
+  setNanoBananaMaxTokens: (nanoBananaMaxTokens) =>
+    set({ nanoBananaMaxTokens: clampNanoBananaMaxTokens(nanoBananaMaxTokens) }),
+  setNanoBananaSeed: (nanoBananaSeed) => set({ nanoBananaSeed: normalizeOptionalInteger(nanoBananaSeed) }),
   addReferenceFiles: (files) =>
     set((state) => ({
       referenceImages: [
@@ -399,6 +495,8 @@ export const useWorkbenchStore = create<WorkbenchState>((set, get) => ({
     get().clearReferenceImages()
     set({
       mode: 'generation',
+      imageModelFamily: 'gpt-image-2',
+      imageModel: IMAGE_MODEL,
       prompt: '',
       negativePrompt: '',
       aspectRatio: defaultAspectRatio,
@@ -409,13 +507,24 @@ export const useWorkbenchStore = create<WorkbenchState>((set, get) => ({
       count: 1,
       compressionRate: DEFAULT_COMPRESSION_RATE,
       outputFormat: 'png',
+      nanoBananaTemperature: DEFAULT_NANO_BANANA_TEMPERATURE,
+      nanoBananaTopP: DEFAULT_NANO_BANANA_TOP_P,
+      nanoBananaMaxTokens: DEFAULT_NANO_BANANA_MAX_TOKENS,
+      nanoBananaSeed: undefined,
       error: undefined,
     })
   },
   applyTemplate: (template) => {
     const size = getImageSize(template.aspectRatio, template.resolutionTier)
+    const templateFamily = template.imageModelFamily || (template.imageModel ? getImageModelFamily(template.imageModel) : 'gpt-image-2')
+    const templateModel =
+      template.imageModel && getImageModelFamily(template.imageModel) === templateFamily
+        ? template.imageModel
+        : getDefaultImageModel(templateFamily)
     set({
       mode: template.mode,
+      imageModelFamily: templateFamily,
+      imageModel: templateModel,
       prompt: template.prompt,
       negativePrompt: template.negativePrompt || '',
       aspectRatio: template.aspectRatio,
@@ -426,6 +535,10 @@ export const useWorkbenchStore = create<WorkbenchState>((set, get) => ({
       count: clampCount(template.count),
       compressionRate: template.compressionRate,
       outputFormat: template.outputFormat,
+      nanoBananaTemperature: template.nanoBananaTemperature ?? DEFAULT_NANO_BANANA_TEMPERATURE,
+      nanoBananaTopP: template.nanoBananaTopP ?? DEFAULT_NANO_BANANA_TOP_P,
+      nanoBananaMaxTokens: template.nanoBananaMaxTokens ?? DEFAULT_NANO_BANANA_MAX_TOKENS,
+      nanoBananaSeed: template.nanoBananaSeed,
       error: undefined,
     })
   },
@@ -433,6 +546,8 @@ export const useWorkbenchStore = create<WorkbenchState>((set, get) => ({
     const form = formFromHistory(record)
     set({
       mode: form.mode,
+      imageModelFamily: form.imageModelFamily,
+      imageModel: form.imageModel,
       prompt: form.prompt,
       negativePrompt: form.negativePrompt,
       aspectRatio: form.aspectRatio,
@@ -443,6 +558,10 @@ export const useWorkbenchStore = create<WorkbenchState>((set, get) => ({
       count: form.count,
       compressionRate: form.compressionRate,
       outputFormat: form.outputFormat,
+      nanoBananaTemperature: form.nanoBananaTemperature,
+      nanoBananaTopP: form.nanoBananaTopP,
+      nanoBananaMaxTokens: form.nanoBananaMaxTokens,
+      nanoBananaSeed: form.nanoBananaSeed,
       error: undefined,
     })
   },
