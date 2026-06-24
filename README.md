@@ -126,7 +126,7 @@ npm run lint     # 代码检查
 关键代码：
 
 ```ts
-export const API_BASE_URL = 'https://img.xmu.la'
+export const API_BASE_URL = 'https://www.www.com'
 ```
 
 这个地址会同时影响以下接口：
