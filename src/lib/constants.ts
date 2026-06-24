@@ -10,7 +10,7 @@ export const API_ENDPOINTS = {
 export const IMAGE_MODEL = 'gpt-image-2'
 export const IMAGE_MODEL_FAMILIES = ['gpt-image-2', 'nano-banana-2', 'nano-banana-pro'] as const
 export const NANO_BANANA_2_MODELS = ['nano-banana-2', 'nano-banana-2-1K', 'nano-banana-2-2K', 'nano-banana-2-4K'] as const
-export const NANO_BANANA_PRO_MODELS = ['nano-banana-pro-1K', 'nano-banana-pro-2K', 'nano-banana-pro-4K'] as const
+export const NANO_BANANA_PRO_MODELS = ['nano-banana-pro', 'nano-banana-pro-1K', 'nano-banana-pro-2K', 'nano-banana-pro-4K'] as const
 export const IMAGE_MODELS = [IMAGE_MODEL, ...NANO_BANANA_2_MODELS, ...NANO_BANANA_PRO_MODELS] as const
 export const AGENT_MODELS = ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini'] as const
 export const DEFAULT_AGENT_MODEL = 'gpt-5.5'
@@ -78,6 +78,7 @@ export const MIN_GENERATION_CONCURRENCY = 1
 export const MAX_GENERATION_CONCURRENCY = 100
 export const DEFAULT_GENERATION_CONCURRENCY = 20
 export const DEFAULT_COMPRESSION_RATE = 0.8
+export const DEFAULT_NANO_BANANA_DETAILED_MODELS_ENABLED = false
 export const DEFAULT_NANO_BANANA_TEMPERATURE = 1
 export const DEFAULT_NANO_BANANA_TOP_P = 1
 export const DEFAULT_NANO_BANANA_MAX_TOKENS = 1024
@@ -95,7 +96,7 @@ export type AgentModel = (typeof AGENT_MODELS)[number]
 
 export function getDefaultImageModel(family: ImageModelFamily): ImageModel {
   if (family === 'nano-banana-2') return 'nano-banana-2'
-  if (family === 'nano-banana-pro') return 'nano-banana-pro-1K'
+  if (family === 'nano-banana-pro') return 'nano-banana-pro'
   return IMAGE_MODEL
 }
 
@@ -129,6 +130,16 @@ export function normalizeImageModel(value: unknown, family?: ImageModelFamily): 
     if (!family || modelFamily === family) return value
   }
   return getDefaultImageModel(family || 'gpt-image-2')
+}
+
+export function normalizeImageModelForDetailSetting(
+  family: ImageModelFamily,
+  model: ImageModel,
+  detailedModelsEnabled: boolean,
+): ImageModel {
+  if (family === 'gpt-image-2') return IMAGE_MODEL
+  if (!detailedModelsEnabled) return getDefaultImageModel(family)
+  return getImageModelFamily(model) === family ? model : getDefaultImageModel(family)
 }
 
 export function getImageSize(aspectRatio: AspectRatio, resolutionTier: ResolutionTier) {

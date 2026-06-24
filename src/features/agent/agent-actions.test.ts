@@ -4,7 +4,7 @@ import type { AgentProposedAction } from '../../types/api'
 import { getActionTemplateDraft } from './agent-actions'
 
 describe('agent actions', () => {
-  it('uses the default detailed model when a createTemplate action only patches the image model family', () => {
+  it('uses the default base model when a createTemplate action only patches the image model family', () => {
     useWorkbenchStore.getState().resetForm()
     useWorkbenchStore.setState({
       imageModelFamily: 'gpt-image-2',
@@ -28,7 +28,7 @@ describe('agent actions', () => {
     const draft = getActionTemplateDraft(action, useWorkbenchStore.getState())
 
     expect(draft.imageModelFamily).toBe('nano-banana-pro')
-    expect(draft.imageModel).toBe('nano-banana-pro-1K')
+    expect(draft.imageModel).toBe('nano-banana-pro')
   })
 
   it('derives the image model family from a detailed model in createTemplate actions', () => {

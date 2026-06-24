@@ -49,6 +49,7 @@ describe('models', () => {
       'nano-banana-2-1K',
       'nano-banana-2-2K',
       'nano-banana-2-4K',
+      'nano-banana-pro',
       'nano-banana-pro-1K',
       'nano-banana-pro-2K',
       'nano-banana-pro-4K',
@@ -66,12 +67,14 @@ describe('models', () => {
       'nano-banana-2-4K',
     ])
     expect(getImageModelOptions('nano-banana-pro')).toEqual([
+      'nano-banana-pro',
       'nano-banana-pro-1K',
       'nano-banana-pro-2K',
       'nano-banana-pro-4K',
     ])
-    expect(getDefaultImageModel('nano-banana-pro')).toBe('nano-banana-pro-1K')
+    expect(getDefaultImageModel('nano-banana-pro')).toBe('nano-banana-pro')
     expect(getImageModelFamily('nano-banana-2-4K')).toBe('nano-banana-2')
+    expect(getImageModelFamily('nano-banana-pro')).toBe('nano-banana-pro')
     expect(getImageModelFamily('nano-banana-pro-4K')).toBe('nano-banana-pro')
   })
 })

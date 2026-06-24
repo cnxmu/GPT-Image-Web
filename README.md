@@ -37,7 +37,8 @@ GitHub 仓库：<https://github.com/cnxmu/GPT-Image-Web>
 ### `nano-banana-2` / `nano-banana-pro`
 
 - 文生图和图生图都走 `/v1/chat/completions`
-- 支持详细模型切换：
+- “Nano Banana 详细模型”在个人设置中默认关闭，关闭时只使用 `nano-banana-2` / `nano-banana-pro`。
+- 如果你的上游重新支持详细模型，可以在个人设置中开启，然后切换：
   - `nano-banana-2`
   - `nano-banana-2-1K`
   - `nano-banana-2-2K`
@@ -114,6 +115,7 @@ npm run lint     # 代码检查
 - 填写 “Agent API Key”
 - 选择 Agent 模型：`gpt-5.5`、`gpt-5.4`、`gpt-5.4-mini`
 - 调整生成并发上限：默认 `20`，范围 `1-100`
+- 按需开启 “Nano Banana 详细模型”
 
 密钥、模板、历史、会话和图片资产都只保存在当前浏览器的 IndexedDB。
 

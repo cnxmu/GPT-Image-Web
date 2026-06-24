@@ -1,5 +1,6 @@
 import {
   ASPECT_RATIOS,
+  DEFAULT_NANO_BANANA_DETAILED_MODELS_ENABLED,
   IMAGE_MODEL_FAMILIES,
   IMAGE_QUALITIES,
   MAX_IMAGE_COUNT,
@@ -13,6 +14,7 @@ import {
   OUTPUT_FORMATS,
   RESOLUTION_TIERS,
   getImageModelOptions,
+  normalizeImageModelForDetailSetting,
   shouldSendOutputCompression,
   type ImageModel,
   type ImageModelFamily,
@@ -20,6 +22,9 @@ import {
   type ModerationLevel,
   type OutputFormat,
 } from '../../lib/constants'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db } from '../../db/db'
+import { normalizeNanoBananaDetailedModelsEnabled } from '../../db/settings.repo'
 import { useWorkbenchStore } from '../../store/workbench.store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,6 +35,11 @@ export function ParameterPanel() {
   const state = useWorkbenchStore()
   const compressionEnabled = shouldSendOutputCompression(state.outputFormat)
   const isNanoBanana = state.imageModelFamily !== 'gpt-image-2'
+  const detailedModelsEnabled =
+    useLiveQuery(async () => {
+      const record = await db.settings.get('nanoBananaDetailedModelsEnabled')
+      return normalizeNanoBananaDetailedModelsEnabled(record?.value)
+    }, []) ?? DEFAULT_NANO_BANANA_DETAILED_MODELS_ENABLED
 
   return (
     <section className="grid gap-4">
@@ -71,9 +81,11 @@ export function ParameterPanel() {
             </Select>
           </Field>
 
-          {state.imageModelFamily === 'gpt-image-2' ? (
+          {state.imageModelFamily === 'gpt-image-2' || !detailedModelsEnabled ? (
             <Field label="当前模型">
-              <div className="flex h-9 items-center rounded-md bg-muted/45 px-3 text-sm">{state.imageModel}</div>
+              <div className="flex h-9 items-center rounded-md bg-muted/45 px-3 text-sm">
+                {normalizeImageModelForDetailSetting(state.imageModelFamily, state.imageModel, detailedModelsEnabled)}
+              </div>
             </Field>
           ) : (
             <Field label="详细模型">

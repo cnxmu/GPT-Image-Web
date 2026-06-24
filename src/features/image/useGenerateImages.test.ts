@@ -91,10 +91,16 @@ describe('generation history persistence', () => {
     const { batch, queuedJobIds } = createRestoredBatchFromHistory(historyRecord())
 
     expect(batch.historyId).toBe('history-a')
-    expect(batch.form.imageModel).toBe('nano-banana-2-2K')
+    expect(batch.form.imageModel).toBe('nano-banana-2')
     expect(batch.results.map((item) => item.status)).toEqual(['success', 'queued', 'failed'])
     expect(batch.results[0].localAssetId).toBe('asset-ok')
     expect(queuedJobIds).toEqual([batch.results[1].id])
+  })
+
+  it('keeps restored detailed models when detailed model setting is enabled', () => {
+    const { batch } = createRestoredBatchFromHistory(historyRecord(), true)
+
+    expect(batch.form.imageModel).toBe('nano-banana-2-2K')
   })
 
   it('creates legacy placeholders for old running history without results', () => {

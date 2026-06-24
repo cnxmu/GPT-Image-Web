@@ -1,6 +1,7 @@
 import {
   DEFAULT_AGENT_MODEL,
   DEFAULT_GENERATION_CONCURRENCY,
+  DEFAULT_NANO_BANANA_DETAILED_MODELS_ENABLED,
   MAX_GENERATION_CONCURRENCY,
   MIN_GENERATION_CONCURRENCY,
   isAgentModel,
@@ -36,6 +37,23 @@ export async function setGenerationConcurrency(value: number) {
   return db.settings.put({
     id: 'generationConcurrency',
     value: clampGenerationConcurrency(value),
+    updatedAt: new Date().toISOString(),
+  })
+}
+
+export function normalizeNanoBananaDetailedModelsEnabled(value: unknown) {
+  return typeof value === 'boolean' ? value : DEFAULT_NANO_BANANA_DETAILED_MODELS_ENABLED
+}
+
+export async function getNanoBananaDetailedModelsEnabled() {
+  const record = await db.settings.get('nanoBananaDetailedModelsEnabled')
+  return normalizeNanoBananaDetailedModelsEnabled(record?.value)
+}
+
+export async function setNanoBananaDetailedModelsEnabled(value: boolean) {
+  return db.settings.put({
+    id: 'nanoBananaDetailedModelsEnabled',
+    value,
     updatedAt: new Date().toISOString(),
   })
 }
