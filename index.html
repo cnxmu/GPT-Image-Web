@@ -2,47 +2,123 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#ffffff" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="description" content="一个面向个人用户的 AI 生图控制台，支持文生图、图生图、批量队列、我的历史回显、个人模板管理、个人 Agent 优化和个人 Agent 对话流程。" />
-    <meta name="keywords" content="个人AI生图,文生图,图生图,GPT Image,gpt-image-2,AI绘画,个人生图控制台,提示词优化,Agent对话,批量生图" />
+
+    <title>GPT Image Web - 在线 AI 生图平台｜文生图、图生图、批量队列与 Agent 提示词工作流</title>
+    <meta
+      name="description"
+      content="GPT Image Web 是一个完整的 AI 生图工作站，支持文生图、图生图、批量生成队列、历史结果回显、模板管理、参考图预览、Agent 图片分析、提示词优化和 Nano Banana 模型工作流。"
+    />
+    <meta
+      name="keywords"
+      content="GPT Image Web,AI生图工作站,AI生图控制台,文生图,图生图,AI绘画,批量生图,提示词优化,Agent对话,图片生成工具,gpt-image-2,nano-banana-2,nano-banana-pro,Nano Banana,AI海报生成,AI封面生成,AI商品图生成,AI头像生成"
+    />
     <meta name="author" content="cnxmu" />
-    <meta name="robots" content="index,follow" />
+    <meta name="creator" content="cnxmu" />
+    <meta name="publisher" content="cnxmu" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://tu.xmu.la/" />
+    <link rel="alternate" href="https://tu.xmu.la/" hreflang="zh-CN" />
+    <link rel="alternate" href="https://tu.xmu.la/" hreflang="x-default" />
+
     <link rel="icon" type="image/svg+xml" href="/ai-img.svg" />
+    <link rel="apple-touch-icon" href="/ai-img.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
+
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="zh_CN" />
-    <meta property="og:site_name" content="个人 AI 生图控制台" />
-    <meta property="og:title" content="个人 AI 生图控制台 - GPT Image Web" />
-    <meta property="og:description" content="一个面向个人用户的 AI 生图控制台，支持文生图、图生图、批量队列、我的历史回显、个人模板管理、个人 Agent 优化和个人 Agent 对话流程。" />
-    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:url" content="https://tu.xmu.la/" />
+    <meta property="og:site_name" content="GPT Image Web" />
+    <meta property="og:title" content="GPT Image Web - 在线 AI 生图平台" />
+    <meta
+      property="og:description"
+      content="一站式 在线 AI 生图平台：文生图、图生图、批量队列、历史回显、模板管理、Agent 提示词优化、图片分析和 Nano Banana 模型工作流。"
+    />
+    <meta property="og:image" content="https://tu.xmu.la/og-image.png" />
+    <meta property="og:image:secure_url" content="https://tu.xmu.la/og-image.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="GPT Image Web AI 生图工作站界面预览" />
+
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="个人 AI 生图控制台 - GPT Image Web" />
-    <meta name="twitter:description" content="一个面向个人用户的 AI 生图控制台，支持文生图、图生图、批量队列、我的历史回显、个人模板管理、个人 Agent 优化和个人 Agent 对话流程。" />
-    <meta name="twitter:image" content="/og-image.png" />
+    <meta name="twitter:title" content="GPT Image Web - 在线 AI 生图平台" />
+    <meta
+      name="twitter:description"
+      content="支持文生图、图生图、批量队列、历史回显、模板管理、Agent 提示词优化、图片分析和 Nano Banana 模型的一站式 AI 生图工作站。"
+    />
+    <meta name="twitter:image" content="https://tu.xmu.la/og-image.png" />
+    <meta name="twitter:image:alt" content="GPT Image Web AI 生图工作站界面预览" />
+
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "个人 AI 生图控制台",
-        "alternateName": "GPT Image Web",
-        "applicationCategory": "DesignApplication",
-        "operatingSystem": "Web",
-        "description": "一个面向个人用户的 AI 生图控制台，支持文生图、图生图、批量队列、我的历史回显、个人模板管理、个人 Agent 优化和个人 Agent 对话流程。",
-        "creator": {
-          "@type": "Person",
-          "name": "cnxmu"
-        }
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://tu.xmu.la/#website",
+            "url": "https://tu.xmu.la/",
+            "name": "GPT Image Web",
+            "alternateName": ["AI 生图平台", "AI 生图平台", "AI 生图工作站", "AI 生图控制台"],
+            "inLanguage": "zh-CN",
+            "description": "GPT Image Web 是一个 AI 生图工作站，支持文生图、图生图、批量生成队列、历史结果回显、模板管理、参考图预览、Agent 图片分析和提示词优化。"
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://tu.xmu.la/#webapp",
+            "url": "https://tu.xmu.la/",
+            "name": "GPT Image Web - 在线 AI 生图平台",
+            "applicationCategory": "DesignApplication",
+            "applicationSubCategory": "AI Image Generation",
+            "operatingSystem": "Web",
+            "browserRequirements": "Requires JavaScript and a modern browser.",
+            "inLanguage": "zh-CN",
+            "isAccessibleForFree": true,
+            "description": "一个完整的 AI 生图平台，支持文生图、图生图、批量队列、历史回显、模板管理、Agent 提示词优化、图片分析和 Nano Banana 模型工作流。",
+            "featureList": [
+              "文生图",
+              "图生图",
+              "批量生成队列",
+              "历史结果回显",
+              "模板管理",
+              "参考图上传与预览",
+              "Agent 图片分析",
+              "Agent 提示词优化",
+              "gpt-image-2",
+              "nano-banana-2",
+              "nano-banana-pro"
+            ],
+            "creator": {
+              "@type": "Person",
+              "name": "cnxmu",
+              "url": "https://github.com/cnxmu/GPT-Image-Web"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://tu.xmu.la/#software",
+            "name": "GPT Image Web",
+            "applicationCategory": "MultimediaApplication",
+            "operatingSystem": "Web",
+            "softwareVersion": "0.0.0",
+            "description": "面向 AI 图片生成、提示词管理、批量任务和历史回显的网页端生图工作站。"
+          }
+        ]
       }
     </script>
-    <title>个人 AI 生图控制台 - GPT Image Web</title>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>GPT Image Web 需要启用 JavaScript 才能使用 AI 生图工作站功能。</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

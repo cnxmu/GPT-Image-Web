@@ -1,4 +1,4 @@
-import { Copy, Download, Eye, RotateCcw } from 'lucide-react'
+import { Check, Copy, Download, Eye, Loader2, RotateCcw, X } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useMemo, useState, memo } from 'react'
 import { db } from '../../db/db'
@@ -15,6 +15,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from './empty-state'
 import { ImagePreviewDialog, type ImagePreviewData } from './ImagePreviewDialog'
+
+type ActionFeedbackState = 'idle' | 'loading' | 'success' | 'error'
+const ACTION_FEEDBACK_RESET_MS = 1200
 
 export function ResultGrid() {
   const allBatches = useWorkbenchStore((state) => state.batches)
@@ -116,6 +119,21 @@ const JobCard = memo(function JobCard({
 }) {
   const src = useJobImageSrc(job)
   const durationMs = getJobDuration(job, now)
+  const [downloadState, setDownloadState] = useState<ActionFeedbackState>('idle')
+  const [copyState, setCopyState] = useState<ActionFeedbackState>('idle')
+
+  async function runWithFeedback(action: () => Promise<void>, setState: (state: ActionFeedbackState) => void) {
+    if (!src) return
+    setState('loading')
+    try {
+      await action()
+      setState('success')
+    } catch {
+      setState('error')
+    } finally {
+      window.setTimeout(() => setState('idle'), ACTION_FEEDBACK_RESET_MS)
+    }
+  }
 
   return (
     <article className="overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-border/60">
@@ -166,14 +184,23 @@ const JobCard = memo(function JobCard({
             type="button"
             size="icon"
             variant="secondary"
-            title="下载"
-            disabled={!src}
-            onClick={() => downloadImage(src, getFilename(outputFormat, job.jobIndex))}
+            title={getActionTitle('下载', downloadState)}
+            disabled={!src || downloadState === 'loading'}
+            aria-label={getActionTitle('下载', downloadState)}
+            onClick={() => runWithFeedback(() => downloadImage(src, getFilename(outputFormat, job.jobIndex)), setDownloadState)}
           >
-            <Download className="h-4 w-4" />
+            <ActionFeedbackIcon state={downloadState} idleIcon="download" />
           </Button>
-          <Button type="button" size="icon" variant="secondary" title="复制" disabled={!src} onClick={() => copyImageToClipboard(src)}>
-            <Copy className="h-4 w-4" />
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            title={getActionTitle('复制', copyState)}
+            disabled={!src || copyState === 'loading'}
+            aria-label={getActionTitle('复制', copyState)}
+            onClick={() => runWithFeedback(() => copyImageToClipboard(src), setCopyState)}
+          >
+            <ActionFeedbackIcon state={copyState} idleIcon="copy" />
           </Button>
           <Button type="button" size="icon" variant="ghost" title="重试占位" disabled>
             <RotateCcw className="h-4 w-4" />
@@ -183,6 +210,26 @@ const JobCard = memo(function JobCard({
     </article>
   )
 })
+
+function getActionTitle(label: '下载' | '复制', state: ActionFeedbackState) {
+  if (state === 'loading') return `${label}中`
+  if (state === 'success') return label === '下载' ? '已下载' : '已复制'
+  if (state === 'error') return `${label}失败`
+  return label
+}
+
+function ActionFeedbackIcon({
+  state,
+  idleIcon,
+}: {
+  state: ActionFeedbackState
+  idleIcon: 'download' | 'copy'
+}) {
+  if (state === 'loading') return <Loader2 className="h-4 w-4 animate-spin" />
+  if (state === 'success') return <Check className="h-4 w-4 text-emerald-600" />
+  if (state === 'error') return <X className="h-4 w-4 text-destructive" />
+  return idleIcon === 'download' ? <Download className="h-4 w-4" /> : <Copy className="h-4 w-4" />
+}
 
 function useJobImageSrc(job: GenerationJob) {
   const directSrc = getImageSrc(job)

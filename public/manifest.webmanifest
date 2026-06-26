@@ -1,18 +1,28 @@
 {
-  "name": "个人 AI 生图控制台",
-  "short_name": "我的生图",
-  "description": "一个面向个人用户的 AI 生图控制台，支持文生图、图生图、批量队列、我的历史回显、个人模板管理、个人 Agent 优化和个人 Agent 对话流程。",
+  "name": "GPT Image Web - AI 生图工作站",
+  "short_name": "GPT Image Web",
+  "description": "支持文生图、图生图、批量队列、历史回显、模板管理、Agent 提示词优化、图片分析和 Nano Banana 模型的 AI 生图工作站。",
+  "id": "https://tu.xmu.la/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
+  "lang": "zh-CN",
+  "categories": ["productivity", "graphics", "design", "utilities"],
   "icons": [
     {
       "src": "/ai-img.svg",
       "sizes": "48x46",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "/ai-img.svg",
+      "sizes": "48x46",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }

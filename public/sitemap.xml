@@ -1,9 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml"
+  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+>
   <url>
-    <loc>https://example.com/</loc>
-    <lastmod>2026-06-22</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://tu.xmu.la/</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://tu.xmu.la/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://tu.xmu.la/" />
+    <image:image>
+      <image:loc>https://tu.xmu.la/og-image.png</image:loc>
+      <image:title>GPT Image Web AI 生图工作站</image:title>
+      <image:caption>支持文生图、图生图、批量队列、历史回显、模板管理和 Agent 提示词优化的 AI 生图工作站。</image:caption>
+    </image:image>
   </url>
 </urlset>
