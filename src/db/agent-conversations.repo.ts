@@ -1,4 +1,5 @@
 import { db } from './db'
+import { deleteAssets } from './assets.repo'
 import { nowIso } from '../lib/time'
 import { createId } from '../lib/uid'
 import type { AgentChatMessage, AgentConversationRecord } from '../types/api'
@@ -63,4 +64,25 @@ export async function clearAgentConversation(id = DEFAULT_AGENT_CONVERSATION_ID)
 
 export async function deleteAgentConversation(id: string) {
   await clearAgentConversation(id)
+}
+
+function getConversationAssetIds(conversations: AgentConversationRecord[]) {
+  return Array.from(
+    new Set(
+      conversations.flatMap((conversation) =>
+        conversation.messages.flatMap((message) => message.attachments?.map((attachment) => attachment.assetId) || []),
+      ),
+    ),
+  )
+}
+
+export async function pruneAgentConversationsToLimit(limit: number) {
+  const safeLimit = Math.max(0, Math.floor(limit))
+  const conversations = await listAgentConversations()
+  const removedConversations = conversations.slice(safeLimit)
+  if (removedConversations.length === 0) return 0
+
+  await deleteAssets(getConversationAssetIds(removedConversations))
+  await db.agentConversations.bulkDelete(removedConversations.map((conversation) => conversation.id))
+  return removedConversations.length
 }

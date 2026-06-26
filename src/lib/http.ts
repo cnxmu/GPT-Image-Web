@@ -45,5 +45,16 @@ export async function ensureOk(response: Response) {
   if (!response.ok) {
     throw createHttpError(response.status, formatApiErrorBody(body))
   }
+  const apiError = formatApiErrorBody(body)
+  if (hasApiErrorBody(body) && apiError) {
+    throw createHttpError(response.status, apiError)
+  }
   return body
+}
+
+function hasApiErrorBody(body: unknown) {
+  if (!body || typeof body !== 'object') return false
+  const payload = body as { error?: unknown; code?: unknown; type?: unknown }
+  if (payload.error) return true
+  return typeof payload.code === 'string' && /error|invalid|unsupported|failed/i.test(payload.code)
 }

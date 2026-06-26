@@ -42,6 +42,7 @@ import { nowIso } from '../../lib/time'
 import { createId } from '../../lib/uid'
 import { cn } from '../../lib/cn'
 import { useWorkbenchStore } from '../../store/workbench.store'
+import { useShallow } from 'zustand/shallow'
 import type { AgentChatMessage, AgentConversationRecord, AgentImageAttachment, AgentProposedAction } from '../../types/api'
 import type { HistoryRecord } from '../../types/history'
 import type { TemplateRecord } from '../../types/template'
@@ -684,7 +685,34 @@ function AgentActionCard({
   history: HistoryRecord[]
   onExecute: () => void
 }) {
-  const state = useWorkbenchStore()
+  const state = useWorkbenchStore(
+    useShallow((store) => ({
+      mode: store.mode,
+      imageModelFamily: store.imageModelFamily,
+      imageModel: store.imageModel,
+      prompt: store.prompt,
+      negativePrompt: store.negativePrompt,
+      aspectRatio: store.aspectRatio,
+      resolutionTier: store.resolutionTier,
+      quality: store.quality,
+      moderation: store.moderation,
+      count: store.count,
+      compressionRate: store.compressionRate,
+      outputFormat: store.outputFormat,
+      setMode: store.setMode,
+      setImageModelFamily: store.setImageModelFamily,
+      setImageModel: store.setImageModel,
+      setPrompt: store.setPrompt,
+      setNegativePrompt: store.setNegativePrompt,
+      setAspectRatio: store.setAspectRatio,
+      setResolutionTier: store.setResolutionTier,
+      setQuality: store.setQuality,
+      setModeration: store.setModeration,
+      setCount: store.setCount,
+      setCompressionRate: store.setCompressionRate,
+      setOutputFormat: store.setOutputFormat,
+    })),
+  )
   const isDone = action.status !== 'pending'
   const patch = getPreviewPatch(action, templates, history)
   const changes = patch ? getFormPatchChanges(patch, state) : []

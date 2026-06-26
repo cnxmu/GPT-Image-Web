@@ -1,6 +1,7 @@
 import { getAsset, putAsset } from '../../db/assets.repo'
 import { nowIso } from '../../lib/time'
 import { createId } from '../../lib/uid'
+import { getImageDimensions, fileToDataUrl } from '../../lib/image-utils'
 import type { AgentChatMessage, AgentImageAttachment } from '../../types/api'
 import type { AssetRecord } from '../../types/api'
 
@@ -55,7 +56,7 @@ export async function collectAgentImageInputs(messages: AgentChatMessage[], maxI
     if (!asset) continue
     inputs.push({
       attachment,
-      dataUrl: await blobToDataUrl(asset.blob, attachment.mimeType || asset.mimeType),
+      dataUrl: await fileToDataUrl(asset.blob, attachment.mimeType || asset.mimeType),
     })
   }
 
@@ -73,36 +74,4 @@ export async function attachmentToFile(attachment: AgentImageAttachment) {
     type: attachment.mimeType || asset.mimeType,
     lastModified: Date.now(),
   })
-}
-
-async function blobToDataUrl(blob: Blob, mimeType: string) {
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result || ''))
-    reader.onerror = () => reject(reader.error)
-    reader.readAsDataURL(blob)
-  })
-
-  if (dataUrl.startsWith('data:')) return dataUrl
-
-  const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl
-  return `data:${mimeType};base64,${base64}`
-}
-
-async function getImageDimensions(file: File) {
-  const url = URL.createObjectURL(file)
-  try {
-    const image = new Image()
-    await new Promise<void>((resolve, reject) => {
-      image.onload = () => resolve()
-      image.onerror = () => reject(new Error('无法读取图片尺寸'))
-      image.src = url
-    })
-    return {
-      width: image.naturalWidth,
-      height: image.naturalHeight,
-    }
-  } finally {
-    URL.revokeObjectURL(url)
-  }
 }

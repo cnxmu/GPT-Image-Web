@@ -18,6 +18,17 @@ export async function clearHistory() {
   return db.history.clear()
 }
 
+export async function pruneHistoryToLimit(limit: number) {
+  const safeLimit = Math.max(0, Math.floor(limit))
+  const records = await db.history.orderBy('startedAt').reverse().toArray()
+  const removedRecords = records.slice(safeLimit)
+  if (removedRecords.length === 0) return 0
+
+  await deleteAssets(getHistoryAssetIds(removedRecords))
+  await db.history.bulkDelete(removedRecords.map((record) => record.id))
+  return removedRecords.length
+}
+
 export function getHistoryAssetIds(records: HistoryRecord[]) {
   return Array.from(
     new Set(

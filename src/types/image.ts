@@ -32,10 +32,6 @@ export interface ImageFormState {
   count: number
   compressionRate: number
   outputFormat: OutputFormat
-  nanoBananaTemperature: number
-  nanoBananaTopP: number
-  nanoBananaMaxTokens: number
-  nanoBananaSeed?: number
 }
 
 export interface ReferenceImagePreview {

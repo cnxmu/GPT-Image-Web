@@ -1,5 +1,5 @@
 import { WandSparkles } from 'lucide-react'
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useOptimizePromptMutation } from '../../features/agent/useOptimizePrompt'
 import { toAppError } from '../../lib/errors'
 import { useWorkbenchStore } from '../../store/workbench.store'
@@ -9,9 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Field } from './field'
-import { AgentChatPanel } from './AgentChatPanel'
 
 type PromptTab = 'editor' | 'chat'
+
+const AgentChatPanel = lazy(async () => {
+  const mod = await import('./AgentChatPanel')
+  return { default: mod.AgentChatPanel }
+})
 
 export function PromptEditor() {
   const prompt = useWorkbenchStore((state) => state.prompt)
@@ -108,7 +112,9 @@ export function PromptEditor() {
         </TabsContent>
 
         <TabsContent value="chat" className="m-0">
-          <AgentChatPanel />
+          <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">正在载入你的个人 Agent</div>}>
+            <AgentChatPanel />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </Card>

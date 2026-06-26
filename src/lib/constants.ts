@@ -1,17 +1,14 @@
-export const API_BASE_URL = 'https://www.www.com'
+export const API_BASE_URL = 'https://img.xmu.la'
 
 export const API_ENDPOINTS = {
   imageGenerations: `${API_BASE_URL}/v1/images/generations`,
   imageEdits: `${API_BASE_URL}/v1/images/edits`,
-  chatCompletions: `${API_BASE_URL}/v1/chat/completions`,
   responses: `${API_BASE_URL}/v1/responses`,
 } as const
 
 export const IMAGE_MODEL = 'gpt-image-2'
-export const IMAGE_MODEL_FAMILIES = ['gpt-image-2', 'nano-banana-2', 'nano-banana-pro'] as const
-export const NANO_BANANA_2_MODELS = ['nano-banana-2', 'nano-banana-2-1K', 'nano-banana-2-2K', 'nano-banana-2-4K'] as const
-export const NANO_BANANA_PRO_MODELS = ['nano-banana-pro', 'nano-banana-pro-1K', 'nano-banana-pro-2K', 'nano-banana-pro-4K'] as const
-export const IMAGE_MODELS = [IMAGE_MODEL, ...NANO_BANANA_2_MODELS, ...NANO_BANANA_PRO_MODELS] as const
+export const IMAGE_MODEL_FAMILIES = ['gpt-image-2'] as const
+export const IMAGE_MODELS = [IMAGE_MODEL] as const
 export const AGENT_MODELS = ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini'] as const
 export const DEFAULT_AGENT_MODEL = 'gpt-5.5'
 
@@ -78,15 +75,6 @@ export const MIN_GENERATION_CONCURRENCY = 1
 export const MAX_GENERATION_CONCURRENCY = 100
 export const DEFAULT_GENERATION_CONCURRENCY = 20
 export const DEFAULT_COMPRESSION_RATE = 0.8
-export const DEFAULT_NANO_BANANA_DETAILED_MODELS_ENABLED = false
-export const DEFAULT_NANO_BANANA_TEMPERATURE = 1
-export const DEFAULT_NANO_BANANA_TOP_P = 1
-export const DEFAULT_NANO_BANANA_MAX_TOKENS = 1024
-export const MIN_NANO_BANANA_TEMPERATURE = 0
-export const MAX_NANO_BANANA_TEMPERATURE = 2
-export const MIN_NANO_BANANA_TOP_P = 0
-export const MAX_NANO_BANANA_TOP_P = 1
-export const MIN_NANO_BANANA_MAX_TOKENS = 1
 
 export type ImageQuality = (typeof IMAGE_QUALITIES)[number]
 export type ModerationLevel = (typeof MODERATION_LEVELS)[number]
@@ -95,25 +83,18 @@ export type WorkbenchMode = 'generation' | 'edit'
 export type AgentModel = (typeof AGENT_MODELS)[number]
 
 export function getDefaultImageModel(family: ImageModelFamily): ImageModel {
-  if (family === 'nano-banana-2') return 'nano-banana-2'
-  if (family === 'nano-banana-pro') return 'nano-banana-pro'
+  void family
   return IMAGE_MODEL
 }
 
 export function getImageModelOptions(family: ImageModelFamily): readonly ImageModel[] {
-  if (family === 'nano-banana-2') return NANO_BANANA_2_MODELS
-  if (family === 'nano-banana-pro') return NANO_BANANA_PRO_MODELS
+  void family
   return [IMAGE_MODEL]
 }
 
 export function getImageModelFamily(model: ImageModel): ImageModelFamily {
-  if (NANO_BANANA_2_MODELS.includes(model as (typeof NANO_BANANA_2_MODELS)[number])) return 'nano-banana-2'
-  if (NANO_BANANA_PRO_MODELS.includes(model as (typeof NANO_BANANA_PRO_MODELS)[number])) return 'nano-banana-pro'
+  void model
   return 'gpt-image-2'
-}
-
-export function isNanoBananaImageModel(model: ImageModel) {
-  return getImageModelFamily(model) !== 'gpt-image-2'
 }
 
 export function isImageModelFamily(value: string): value is ImageModelFamily {
@@ -130,16 +111,6 @@ export function normalizeImageModel(value: unknown, family?: ImageModelFamily): 
     if (!family || modelFamily === family) return value
   }
   return getDefaultImageModel(family || 'gpt-image-2')
-}
-
-export function normalizeImageModelForDetailSetting(
-  family: ImageModelFamily,
-  model: ImageModel,
-  detailedModelsEnabled: boolean,
-): ImageModel {
-  if (family === 'gpt-image-2') return IMAGE_MODEL
-  if (!detailedModelsEnabled) return getDefaultImageModel(family)
-  return getImageModelFamily(model) === family ? model : getDefaultImageModel(family)
 }
 
 export function getImageSize(aspectRatio: AspectRatio, resolutionTier: ResolutionTier) {

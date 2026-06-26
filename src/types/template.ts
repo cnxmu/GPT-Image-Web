@@ -28,10 +28,6 @@ export interface TemplateRecord {
   count: number
   compressionRate: number
   outputFormat: OutputFormat
-  nanoBananaTemperature?: number
-  nanoBananaTopP?: number
-  nanoBananaMaxTokens?: number
-  nanoBananaSeed?: number
   createdAt: string
   updatedAt: string
 }

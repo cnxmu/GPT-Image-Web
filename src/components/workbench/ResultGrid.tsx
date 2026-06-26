@@ -1,6 +1,6 @@
 import { Copy, Download, Eye, RotateCcw } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, memo } from 'react'
 import { db } from '../../db/db'
 import { getFilename } from '../../features/image/image.api'
 import { getImageSrc } from '../../features/image/image.adapter'
@@ -9,6 +9,7 @@ import { formatDateTime, formatDuration } from '../../lib/time'
 import { useNow } from '../../lib/use-now'
 import { useWorkbenchStore } from '../../store/workbench.store'
 import type { GenerationBatch, GenerationJob } from '../../types/image'
+import { StatusBadge } from './StatusBadge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,17 +23,22 @@ export function ResultGrid() {
     () => allBatches.filter((batch) => visibleBatchIds.includes(batch.id)),
     [allBatches, visibleBatchIds],
   )
-  const now = useNow()
+  const allDone = batches.length > 0 && batches.every(
+    (b) => b.status === 'success' || b.status === 'failed' || b.status === 'partial',
+  )
+  const now = useNow(allDone ? 0 : 1000)
   const [preview, setPreview] = useState<ImagePreviewData | null>(null)
+
+  const hasResults = batches.length > 0
 
   return (
     <Card className="gap-0">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm">我的结果</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-4 p-4">
-        {batches.length === 0 ? (
-          <EmptyState title="还没有本次结果" detail="点击生成后，这里会显示你的图片、耗时、真实尺寸和操作按钮。" />
+      <CardContent className={hasResults ? 'grid gap-4 p-4' : 'grid p-4'}>
+        {!hasResults ? (
+          <EmptyState compact title="还没有本次结果" detail="点击生成后，这里会显示你的图片、耗时、真实尺寸和操作按钮。" />
         ) : (
           batches.map((batch) => <BatchResult key={batch.id} batch={batch} now={now} onPreview={setPreview} />)
         )}
@@ -43,7 +49,7 @@ export function ResultGrid() {
   )
 }
 
-function BatchResult({
+const BatchResult = memo(function BatchResult({
   batch,
   now,
   onPreview,
@@ -80,17 +86,24 @@ function BatchResult({
       </div>
     </section>
   )
-}
+}, (prevProps, nextProps) => {
+  // For terminal batches, skip re-renders triggered by now changes
+  if (prevProps.batch !== nextProps.batch) return false
+  if (prevProps.onPreview !== nextProps.onPreview) return false
+  const terminal = nextProps.batch.status === 'success' || nextProps.batch.status === 'failed' || nextProps.batch.status === 'partial'
+  if (!terminal) return false
+  return true
+})
 
 function getBatchTitle(batch: GenerationBatch) {
   const mode = batch.form.mode === 'generation' ? '文生图' : '图生图'
   if (batch.form.imageModelFamily !== 'gpt-image-2') {
-    return `${mode} · ${batch.form.imageModel} · ${batch.form.aspectRatio}`
+    return `${mode} · ${batch.form.imageModel} · ${batch.form.aspectRatio} · ${batch.form.resolutionTier} · ${batch.form.size}`
   }
   return `${mode} · ${batch.form.size} · ${batch.form.outputFormat.toUpperCase()}`
 }
 
-function JobCard({
+const JobCard = memo(function JobCard({
   job,
   outputFormat,
   now,
@@ -169,18 +182,18 @@ function JobCard({
       </div>
     </article>
   )
-}
+})
 
 function useJobImageSrc(job: GenerationJob) {
   const directSrc = getImageSrc(job)
   const asset = useLiveQuery(
-    () => (!directSrc && job.localAssetId ? db.assets.get(job.localAssetId) : undefined),
-    [directSrc, job.localAssetId],
+    () => (job.localAssetId ? db.assets.get(job.localAssetId) : undefined),
+    [job.localAssetId],
   )
   const [assetSrc, setAssetSrc] = useState<{ assetId?: string; src: string }>({ src: '' })
 
   useEffect(() => {
-    if (directSrc || !asset || !job.localAssetId) return
+    if (!asset || !job.localAssetId) return
 
     let disposed = false
     const objectUrl = URL.createObjectURL(asset.blob)
@@ -197,9 +210,9 @@ function useJobImageSrc(job: GenerationJob) {
       disposed = true
       URL.revokeObjectURL(objectUrl)
     }
-  }, [asset, directSrc, job.localAssetId])
+  }, [asset, job.localAssetId])
 
-  return directSrc || (assetSrc.assetId === job.localAssetId ? assetSrc.src : '')
+  return (assetSrc.assetId === job.localAssetId ? assetSrc.src : '') || directSrc
 }
 
 function getJobDuration(job: GenerationJob, now: number) {
@@ -210,24 +223,4 @@ function getJobDuration(job: GenerationJob, now: number) {
 
 function getBatchSlowestMs(batch: GenerationBatch, now: number) {
   return batch.results.reduce((max, job) => Math.max(max, getJobDuration(job, now)), 0)
-}
-
-function StatusBadge({ status }: { status: GenerationBatch['status'] | GenerationJob['status'] }) {
-  const text =
-    status === 'success'
-      ? '成功'
-      : status === 'partial'
-        ? '部分成功'
-        : status === 'failed'
-          ? '失败'
-          : status === 'running'
-            ? '生成中'
-            : '排队'
-  const variant =
-    status === 'failed'
-      ? 'destructive'
-      : status === 'success' || status === 'running'
-        ? 'secondary'
-        : 'outline'
-  return <Badge variant={variant}>{text}</Badge>
 }

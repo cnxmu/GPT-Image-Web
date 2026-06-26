@@ -1,12 +1,7 @@
 import { createId } from '../../lib/uid'
+import { getMimeType } from '../../lib/image-utils'
 import type { NormalizedImageResult } from '../../types/image'
 import type { OutputFormat } from '../../lib/constants'
-
-function getMimeType(outputFormat: OutputFormat): NormalizedImageResult['mimeType'] {
-  if (outputFormat === 'jpeg') return 'image/jpeg'
-  if (outputFormat === 'webp') return 'image/webp'
-  return 'image/png'
-}
 
 function withDataUrlPrefix(value: string, mimeType: string) {
   if (value.startsWith('data:')) return value

@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, Plus, Save, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, memo } from 'react'
 import { deleteTemplate, upsertTemplate } from '../../db/templates.repo'
 import { useTemplates } from '../../features/templates/useTemplates'
 import { getImageSize } from '../../lib/constants'
@@ -15,7 +15,6 @@ import { EmptyState } from '../workbench/empty-state'
 
 export function SidebarTemplates() {
   const templates = useTemplates()
-  const state = useWorkbenchStore()
   const applyTemplate = useWorkbenchStore((store) => store.applyTemplate)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -24,6 +23,7 @@ export function SidebarTemplates() {
   const systemTemplates = useMemo(() => templates.filter((template) => template.source === 'system'), [templates])
 
   async function saveTemplate() {
+    const state = useWorkbenchStore.getState()
     const now = nowIso()
     const template: TemplateRecord = {
       id: createId('template'),
@@ -43,10 +43,6 @@ export function SidebarTemplates() {
       count: state.count,
       compressionRate: state.compressionRate,
       outputFormat: state.outputFormat,
-      nanoBananaTemperature: state.nanoBananaTemperature,
-      nanoBananaTopP: state.nanoBananaTopP,
-      nanoBananaMaxTokens: state.nanoBananaMaxTokens,
-      nanoBananaSeed: state.nanoBananaSeed,
       createdAt: now,
       updatedAt: now,
     }
@@ -113,7 +109,7 @@ export function SidebarTemplates() {
   )
 }
 
-function TemplateCard({
+const TemplateCard = memo(function TemplateCard({
   template,
   onApply,
   onDelete,
@@ -144,4 +140,4 @@ function TemplateCard({
       <p className="mt-2 line-clamp-3 text-xs leading-5">{template.prompt}</p>
     </article>
   )
-}
+})

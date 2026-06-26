@@ -1,17 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import {
-  DEFAULT_NANO_BANANA_MAX_TOKENS,
-  DEFAULT_NANO_BANANA_DETAILED_MODELS_ENABLED,
-  DEFAULT_NANO_BANANA_TEMPERATURE,
-  DEFAULT_NANO_BANANA_TOP_P,
-  getDefaultImageModel,
-  getImageSize,
-  getImageModelFamily,
-  normalizeImageModelForDetailSetting,
-  isImageModel,
-  isImageModelFamily,
-} from '../../lib/constants'
 import { AppError, toAppError } from '../../lib/errors'
 import { getActualImageSize } from '../../lib/image-size'
 import { nowIso } from '../../lib/time'
@@ -19,14 +7,16 @@ import { createId } from '../../lib/uid'
 import { getAsset, putAsset } from '../../db/assets.repo'
 import { db } from '../../db/db'
 import { getSecret } from '../../db/secrets.repo'
-import { getGenerationConcurrency, getNanoBananaDetailedModelsEnabled } from '../../db/settings.repo'
+import { getGenerationConcurrency } from '../../db/settings.repo'
 import { upsertHistory } from '../../db/history.repo'
 import { useWorkbenchStore } from '../../store/workbench.store'
+import { snapshotFormFromStore, formStateFromHistoryRecord } from '../../lib/form-snapshot'
 import type { AssetRecord } from '../../types/api'
 import type { HistoryImageResult, HistoryRecord, HistoryReferenceImage } from '../../types/history'
 import type { GenerationBatch, GenerationJob, ImageFormState, NormalizedImageResult } from '../../types/image'
-import { editImage, generateImage } from './image.api'
+import { editImage, generateImage, getMimeType } from './image.api'
 import { getImageSrc, normalizeImageResponse } from './image.adapter'
+import { getImageDimensions } from '../../lib/image-utils'
 
 interface RunnerJob extends GenerationJob {
   form: ImageFormState
@@ -39,30 +29,8 @@ let schedulerActive = false
 let restoreStarted = false
 let schedulerConcurrency = 20
 
-function snapshotForm(
-  state: ReturnType<typeof useWorkbenchStore.getState>,
-  detailedModelsEnabled = DEFAULT_NANO_BANANA_DETAILED_MODELS_ENABLED,
-): ImageFormState {
-  const imageModel = normalizeImageModelForDetailSetting(state.imageModelFamily, state.imageModel, detailedModelsEnabled)
-  return {
-    mode: state.mode,
-    imageModelFamily: state.imageModelFamily,
-    imageModel,
-    prompt: state.prompt.trim(),
-    negativePrompt: state.negativePrompt.trim(),
-    aspectRatio: state.aspectRatio,
-    resolutionTier: state.resolutionTier,
-    size: getImageSize(state.aspectRatio, state.resolutionTier),
-    quality: state.quality,
-    moderation: state.moderation,
-    count: state.count,
-    compressionRate: state.compressionRate,
-    outputFormat: state.outputFormat,
-    nanoBananaTemperature: state.nanoBananaTemperature,
-    nanoBananaTopP: state.nanoBananaTopP,
-    nanoBananaMaxTokens: state.nanoBananaMaxTokens,
-    nanoBananaSeed: state.nanoBananaSeed,
-  }
+function snapshotForm(state: ReturnType<typeof useWorkbenchStore.getState>): ImageFormState {
+  return snapshotFormFromStore(state)
 }
 
 function validateForm(form: ImageFormState, referenceImages: File[]) {
@@ -70,10 +38,6 @@ function validateForm(form: ImageFormState, referenceImages: File[]) {
   if (form.mode === 'edit' && referenceImages.length === 0) {
     throw new AppError('UPLOAD_REQUIRED', '图生图模式请先上传至少一张你的参考图')
   }
-}
-
-function getMimeType(outputFormat: ImageFormState['outputFormat']): GenerationJob['mimeType'] {
-  return outputFormat === 'jpeg' ? 'image/jpeg' : outputFormat === 'webp' ? 'image/webp' : 'image/png'
 }
 
 export function createBatch(form: ImageFormState, referenceImages: HistoryReferenceImage[] = []): GenerationBatch {
@@ -123,10 +87,6 @@ export function createInitialHistory(batch: GenerationBatch): HistoryRecord {
       count: form.count,
       compressionRate: form.outputFormat === 'png' ? undefined : form.compressionRate,
       outputFormat: form.outputFormat,
-      nanoBananaTemperature: form.nanoBananaTemperature,
-      nanoBananaTopP: form.nanoBananaTopP,
-      nanoBananaMaxTokens: form.nanoBananaMaxTokens,
-      nanoBananaSeed: form.nanoBananaSeed,
     },
     status: 'running',
     total: form.count,
@@ -181,7 +141,7 @@ export function toHistoryResult(job: GenerationJob): HistoryImageResult {
     id: job.id,
     jobIndex: job.jobIndex,
     status: job.status,
-    url: job.url,
+    url: job.localAssetId ? undefined : job.url,
     b64Json: job.localAssetId ? undefined : job.b64Json,
     localAssetId: job.localAssetId,
     actualWidth: job.actualWidth,
@@ -243,24 +203,6 @@ async function persistGeneratedImageAsset(
   }
 }
 
-async function getImageDimensions(file: File) {
-  const url = URL.createObjectURL(file)
-  try {
-    const image = new Image()
-    await new Promise<void>((resolve, reject) => {
-      image.onload = () => resolve()
-      image.onerror = () => reject(new Error('无法读取图片尺寸'))
-      image.src = url
-    })
-    return {
-      width: image.naturalWidth,
-      height: image.naturalHeight,
-    }
-  } finally {
-    URL.revokeObjectURL(url)
-  }
-}
-
 async function persistReferenceImages(files: File[]) {
   const references: HistoryReferenceImage[] = []
 
@@ -313,74 +255,23 @@ async function restoreReferenceFiles(record: HistoryRecord) {
   return files
 }
 
-function formFromHistoryRecord(
-  record: HistoryRecord,
-  detailedModelsEnabled = DEFAULT_NANO_BANANA_DETAILED_MODELS_ENABLED,
-): ImageFormState {
-  const aspectRatio = record.params.aspectRatio as ImageFormState['aspectRatio']
-  const resolutionTier = record.params.resolutionTier as ImageFormState['resolutionTier']
-  const historyModel = typeof record.params.imageModel === 'string' && isImageModel(record.params.imageModel)
-    ? record.params.imageModel
-    : undefined
-  const imageModelFamily =
-    typeof record.params.imageModelFamily === 'string' && isImageModelFamily(record.params.imageModelFamily)
-      ? record.params.imageModelFamily
-      : historyModel
-        ? getImageModelFamily(historyModel)
-        : 'gpt-image-2'
-  const rawImageModel = historyModel && getImageModelFamily(historyModel) === imageModelFamily
-    ? historyModel
-    : getDefaultImageModel(imageModelFamily)
-  const imageModel = normalizeImageModelForDetailSetting(imageModelFamily, rawImageModel, detailedModelsEnabled)
-
-  return {
-    mode: record.mode,
-    imageModelFamily,
-    imageModel,
-    prompt: record.prompt,
-    negativePrompt: record.negativePrompt || '',
-    aspectRatio,
-    resolutionTier,
-    size: getImageSize(aspectRatio, resolutionTier),
-    quality: record.params.quality as ImageFormState['quality'],
-    moderation: record.params.moderation as ImageFormState['moderation'],
-    count: record.params.count,
-    compressionRate: typeof record.params.compressionRate === 'number' ? record.params.compressionRate : 0.8,
-    outputFormat: (record.params.outputFormat || 'png') as ImageFormState['outputFormat'],
-    nanoBananaTemperature:
-      typeof record.params.nanoBananaTemperature === 'number'
-        ? record.params.nanoBananaTemperature
-        : DEFAULT_NANO_BANANA_TEMPERATURE,
-    nanoBananaTopP:
-      typeof record.params.nanoBananaTopP === 'number'
-        ? record.params.nanoBananaTopP
-        : DEFAULT_NANO_BANANA_TOP_P,
-    nanoBananaMaxTokens:
-      typeof record.params.nanoBananaMaxTokens === 'number'
-        ? record.params.nanoBananaMaxTokens
-        : DEFAULT_NANO_BANANA_MAX_TOKENS,
-    nanoBananaSeed:
-      typeof record.params.nanoBananaSeed === 'number' && Number.isFinite(record.params.nanoBananaSeed)
-        ? Math.round(record.params.nanoBananaSeed)
-        : undefined,
-  }
+function formFromHistoryRecord(record: HistoryRecord): ImageFormState {
+  return formStateFromHistoryRecord(record)
 }
 
 async function getImageApiKeyForModel(form: ImageFormState) {
   const imageKey = (await getSecret('imageApiKey'))?.value?.trim()
-  const bananaKey = (await getSecret('bananaImageApiKey'))?.value?.trim()
-  const apiKey = form.imageModelFamily === 'gpt-image-2' ? imageKey : bananaKey || imageKey
-  return apiKey || ''
+  void form
+  return imageKey || ''
 }
 
 export function createRestoredBatchFromHistory(
   record: HistoryRecord,
-  detailedModelsEnabled = DEFAULT_NANO_BANANA_DETAILED_MODELS_ENABLED,
 ): {
   batch: GenerationBatch
   queuedJobIds: string[]
 } {
-  const form = formFromHistoryRecord(record, detailedModelsEnabled)
+  const form = formFromHistoryRecord(record)
   const batchId = `restored_${record.id}`
   const historyResults =
     record.results.length > 0
@@ -466,6 +357,7 @@ async function executeJob(job: RunnerJob) {
       job.id,
       {
         ...normalized,
+        url: localAssetId ? undefined : normalized.url,
         b64Json: localAssetId ? undefined : normalized.b64Json,
         localAssetId,
         raw: stripImagePayload(normalized.raw),
@@ -512,12 +404,11 @@ export async function restoreRunningHistory() {
   if (restoreStarted) return
   restoreStarted = true
 
-  const detailedModelsEnabled = await getNanoBananaDetailedModelsEnabled()
   const records = await db.history.where('status').equals('running').toArray()
   for (const record of records) {
     if (useWorkbenchStore.getState().batches.some((batch) => batch.historyId === record.id)) continue
 
-    const { batch, queuedJobIds } = createRestoredBatchFromHistory(record, detailedModelsEnabled)
+    const { batch, queuedJobIds } = createRestoredBatchFromHistory(record)
     if (queuedJobIds.length === 0) continue
     const apiKey = await getImageApiKeyForModel(batch.form)
     if (!apiKey) continue
@@ -565,7 +456,15 @@ async function runScheduler() {
       if (!queuedJob) break
 
       const runnerJob = runnerContext.get(queuedJob.id)
-      if (!runnerJob) continue
+      if (!runnerJob) {
+        const batch = useWorkbenchStore.getState().failJob(queuedJob.id, {
+          durationMs: 0,
+          finishedAt: performance.now(),
+          error: '生成任务上下文丢失，请重新提交这一张图片',
+        })
+        if (batch) void persistBatchHistory(batch)
+        continue
+      }
 
       void executeJob(runnerJob)
     }
@@ -584,8 +483,7 @@ export function useGenerateImagesMutation() {
   return useMutation({
     mutationFn: async () => {
       const store = useWorkbenchStore.getState()
-      const detailedModelsEnabled = await getNanoBananaDetailedModelsEnabled()
-      const form = snapshotForm(store, detailedModelsEnabled)
+      const form = snapshotForm(store)
       const referenceImages = store.referenceImages.map((item) => item.file)
       const apiKey = await getImageApiKeyForModel(form)
 

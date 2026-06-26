@@ -18,10 +18,6 @@ function form(count: number): ImageFormState {
     count,
     compressionRate: 0.8,
     outputFormat: 'png',
-    nanoBananaTemperature: 1,
-    nanoBananaTopP: 1,
-    nanoBananaMaxTokens: 1024,
-    nanoBananaSeed: undefined,
   }
 }
 
@@ -55,8 +51,8 @@ function historyRecord(id: string): HistoryRecord {
     prompt: '历史提示词',
     negativePrompt: '历史负面词',
     params: {
-      imageModelFamily: 'nano-banana-pro',
-      imageModel: 'nano-banana-pro-4K',
+      imageModelFamily: 'gpt-image-2',
+      imageModel: 'gpt-image-2',
       aspectRatio: '16:9',
       resolutionTier: '1K',
       size: '1920x1080',
@@ -123,6 +119,29 @@ describe('workbench generation queue', () => {
       failed: 0,
       slowestMs: 2500,
     })
+  })
+
+  it('does not increase active jobs when marking an unknown job as running', () => {
+    useWorkbenchStore.getState().enqueueBatch(batch('a', 1))
+
+    const job = useWorkbenchStore.getState().markJobRunning('missing-job', 1000)
+
+    expect(job).toBeUndefined()
+    expect(useWorkbenchStore.getState().activeJobCount).toBe(0)
+    expect(useWorkbenchStore.getState().batches[0].results[0].status).toBe('queued')
+  })
+
+  it('does not decrease active jobs when failing an unknown job', () => {
+    useWorkbenchStore.getState().enqueueBatch(batch('a', 1))
+
+    const updatedBatch = useWorkbenchStore.getState().failJob('missing-job', {
+      durationMs: 0,
+      error: 'missing',
+    })
+
+    expect(updatedBatch).toBeUndefined()
+    expect(useWorkbenchStore.getState().activeJobCount).toBe(0)
+    expect(useWorkbenchStore.getState().batches[0].results[0].status).toBe('queued')
   })
 
   it('does not count queued jobs as elapsed time', () => {
@@ -221,8 +240,8 @@ describe('workbench generation queue', () => {
     expect(useWorkbenchStore.getState()).toMatchObject({
       prompt: '历史提示词',
       negativePrompt: '历史负面词',
-      imageModelFamily: 'nano-banana-pro',
-      imageModel: 'nano-banana-pro-4K',
+      imageModelFamily: 'gpt-image-2',
+      imageModel: 'gpt-image-2',
       aspectRatio: '16:9',
       resolutionTier: '1K',
       size: '1920x1080',

@@ -29,12 +29,12 @@ export function GenerateButton() {
   }
 
   return (
-    <section className="rounded-xl bg-muted/35 p-3">
-      <div className="grid gap-3">
+    <section className="rounded-xl bg-muted/35 p-2.5">
+      <div className="grid gap-2">
         <div>
           <p className="text-sm font-semibold">本次准备生成 {count} 张图片</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            会拆分为 {count} 次请求，每次固定 n=1。你的并发上限 {concurrency}，当前运行 {activeJobCount} 个，排队 {queuedCount} 个。
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            n=1 分批请求 · 并发 {concurrency} · 运行 {activeJobCount} · 排队 {queuedCount}
           </p>
         </div>
         <Button type="button" className="w-full" disabled={mutation.isPending} onClick={handleGenerate}>

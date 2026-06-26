@@ -45,7 +45,7 @@ export function createHttpError(status: number, message: string) {
   if (status === 524) {
     return new AppError(
       'API_ERROR',
-      `接口返回 524，通常表示中转站等待上游模型响应超时。${message ? `接口返回：${message}。` : ''}可以稍后重试，或先降低数量、减少参考图、选择更低的 Nano Banana 详细模型。`,
+      `接口返回 524，通常表示中转站等待上游模型响应超时。${message ? `接口返回：${message}。` : ''}可以稍后重试，或先降低数量、减少参考图。`,
       status,
     )
   }

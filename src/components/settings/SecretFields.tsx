@@ -11,14 +11,11 @@ import { Field } from '../workbench/field'
 export function SecretFields() {
   const secrets = useLiveQuery(() => db.secrets.toArray(), [], [])
   const imageSecret = secrets.find((item) => item.id === 'imageApiKey')?.value || ''
-  const bananaSecret = secrets.find((item) => item.id === 'bananaImageApiKey')?.value || ''
   const agentSecret = secrets.find((item) => item.id === 'agentApiKey')?.value || ''
   const [imageApiKey, setImageApiKey] = useState<string | undefined>()
-  const [bananaImageApiKey, setBananaImageApiKey] = useState<string | undefined>()
   const [agentApiKey, setAgentApiKey] = useState<string | undefined>()
   const [visible, setVisible] = useState(false)
   const currentImageApiKey = imageApiKey ?? imageSecret
-  const currentBananaImageApiKey = bananaImageApiKey ?? bananaSecret
   const currentAgentApiKey = agentApiKey ?? agentSecret
 
   return (
@@ -29,14 +26,6 @@ export function SecretFields() {
         value={currentImageApiKey}
         visible={visible}
         onChange={setImageApiKey}
-      />
-      <SecretField
-        id="bananaImageApiKey"
-        label="Nano Banana API Key（可选）"
-        value={currentBananaImageApiKey}
-        visible={visible}
-        hint="留空时，nano-banana-2 和 nano-banana-pro 会使用上面的生图 API Key。"
-        onChange={setBananaImageApiKey}
       />
       <SecretField
         id="agentApiKey"
@@ -51,7 +40,6 @@ export function SecretFields() {
           onClick={() =>
             Promise.all([
               setSecret('imageApiKey', currentImageApiKey.trim()),
-              setSecret('bananaImageApiKey', currentBananaImageApiKey.trim()),
               setSecret('agentApiKey', currentAgentApiKey.trim()),
             ])
           }
@@ -67,7 +55,7 @@ export function SecretFields() {
           variant="destructive"
           onClick={() =>
             confirm('确定清除全部密钥？') &&
-            Promise.all([deleteSecret('imageApiKey'), deleteSecret('bananaImageApiKey'), deleteSecret('agentApiKey')])
+            Promise.all([deleteSecret('imageApiKey'), deleteSecret('agentApiKey')])
           }
         >
           <Trash2 className="h-4 w-4" />

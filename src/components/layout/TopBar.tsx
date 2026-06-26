@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 export function TopBar({ stats, onOpenSettings }: { stats: GenerationStats; onOpenSettings: () => void }) {
   const secrets = useLiveQuery(() => db.secrets.toArray(), [], [])
   const hasImageKey = secrets.some((item) => item.id === 'imageApiKey' && item.value)
-  const hasBananaImageKey = secrets.some((item) => item.id === 'bananaImageApiKey' && item.value)
   const hasAgentKey = secrets.some((item) => item.id === 'agentApiKey' && item.value)
 
   return (
@@ -30,7 +29,6 @@ export function TopBar({ stats, onOpenSettings }: { stats: GenerationStats; onOp
 
         <div className="flex items-center gap-2 text-xs">
           <KeyBadge active={hasImageKey} label="我的生图密钥" />
-          <KeyBadge active={hasBananaImageKey} label="Nano Banana 密钥" />
           <KeyBadge active={hasAgentKey} label="我的 Agent 密钥" />
         </div>
 

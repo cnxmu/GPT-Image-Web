@@ -17,10 +17,6 @@ const form: ImageFormState = {
   count: 3,
   compressionRate: 0.8,
   outputFormat: 'png',
-  nanoBananaTemperature: 1,
-  nanoBananaTopP: 1,
-  nanoBananaMaxTokens: 1024,
-  nanoBananaSeed: undefined,
 }
 
 function historyRecord(): HistoryRecord {
@@ -29,8 +25,8 @@ function historyRecord(): HistoryRecord {
     mode: 'generation',
     prompt: '恢复测试',
     params: {
-      imageModelFamily: 'nano-banana-2',
-      imageModel: 'nano-banana-2-2K',
+      imageModelFamily: 'gpt-image-2',
+      imageModel: 'gpt-image-2',
       aspectRatio: '1:1',
       resolutionTier: '1K',
       size: '1024x1024',
@@ -91,16 +87,10 @@ describe('generation history persistence', () => {
     const { batch, queuedJobIds } = createRestoredBatchFromHistory(historyRecord())
 
     expect(batch.historyId).toBe('history-a')
-    expect(batch.form.imageModel).toBe('nano-banana-2')
+    expect(batch.form.imageModel).toBe('gpt-image-2')
     expect(batch.results.map((item) => item.status)).toEqual(['success', 'queued', 'failed'])
     expect(batch.results[0].localAssetId).toBe('asset-ok')
     expect(queuedJobIds).toEqual([batch.results[1].id])
-  })
-
-  it('keeps restored detailed models when detailed model setting is enabled', () => {
-    const { batch } = createRestoredBatchFromHistory(historyRecord(), true)
-
-    expect(batch.form.imageModel).toBe('nano-banana-2-2K')
   })
 
   it('creates legacy placeholders for old running history without results', () => {
@@ -120,6 +110,7 @@ describe('generation history persistence', () => {
       batchId: 'batch-a',
       jobIndex: 0,
       status: 'success',
+      url: 'https://example.com/result.png',
       b64Json: 'data:image/png;base64,large',
       localAssetId: 'asset-generated',
       mimeType: 'image/png',
@@ -136,6 +127,7 @@ describe('generation history persistence', () => {
     expect(toHistoryResult(job)).toMatchObject({
       id: 'job-asset',
       localAssetId: 'asset-generated',
+      url: undefined,
       b64Json: undefined,
       raw: {
         b64_json: '[omitted image data]',

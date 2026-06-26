@@ -1,7 +1,8 @@
-import { useMemo } from 'react'
+import { useMemo, memo } from 'react'
 import { formatDuration } from '../../lib/time'
 import { useNow } from '../../lib/use-now'
-import { getGenerationBatchStats, useWorkbenchStore } from '../../store/workbench.store'
+import { useWorkbenchStore } from '../../store/workbench.store'
+import { getGenerationBatchStats } from '../../store/workbench-utils'
 import { Card, CardContent } from '@/components/ui/card'
 
 export function StatsBar() {
@@ -24,7 +25,7 @@ export function StatsBar() {
   )
 }
 
-function Metric({ label, value, tone }: { label: string; value: string | number; tone?: 'success' | 'danger' }) {
+const Metric = memo(function Metric({ label, value, tone }: { label: string; value: string | number; tone?: 'success' | 'danger' }) {
   return (
     <Card size="sm" className="shadow-none">
       <CardContent className="px-4">
@@ -43,4 +44,4 @@ function Metric({ label, value, tone }: { label: string; value: string | number;
       </CardContent>
     </Card>
   )
-}
+})
