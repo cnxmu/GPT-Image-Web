@@ -73,7 +73,7 @@ npm run lint     # 代码检查
 接口基地址在 [src/lib/constants.ts](E:/Users/cnxmu/Documents/kaifa/生图工作站-网页端/src/lib/constants.ts:1)：
 
 ```ts
-export const API_BASE_URL = 'https://img.xmu.la'
+export const API_BASE_URL = 'https://api.google.com'
 ```
 
 当前接口：
