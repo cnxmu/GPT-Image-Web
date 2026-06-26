@@ -21,10 +21,9 @@ export function normalizeImageResponse(raw: unknown, outputFormat: OutputFormat)
       revisedPrompt?: string
     }>
     output?: Array<unknown>
-    choices?: Array<{
-      message?: {
-        content?: unknown
-        images?: unknown
+    candidates?: Array<{
+      content?: {
+        parts?: unknown[]
       }
     }>
   }
@@ -37,7 +36,7 @@ export function normalizeImageResponse(raw: unknown, outputFormat: OutputFormat)
       revisedPrompt: item.revised_prompt || item.revisedPrompt,
       raw: item,
     })),
-    ...extractChatCompletionImages(response, mimeType),
+    ...extractGenerateContentImages(response, mimeType),
   ]
 
   return imageItems.map((item) => {
@@ -52,18 +51,16 @@ export function normalizeImageResponse(raw: unknown, outputFormat: OutputFormat)
   })
 }
 
-function extractChatCompletionImages(
-  response: { choices?: Array<{ message?: { content?: unknown; images?: unknown } }> },
+function extractGenerateContentImages(
+  response: { candidates?: Array<{ content?: { parts?: unknown[] } }> },
   mimeType: string,
 ) {
   const images: Array<{ url?: string; b64Json?: string; revisedPrompt?: string; raw: unknown }> = []
 
-  for (const choice of response.choices || []) {
-    const message = choice.message
-    if (!message) continue
-
-    collectImageValues(message.images, images, mimeType)
-    collectImageValues(message.content, images, mimeType)
+  for (const candidate of response.candidates || []) {
+    for (const part of candidate.content?.parts || []) {
+      collectImageValues(part, images, mimeType)
+    }
   }
 
   return images
@@ -99,6 +96,20 @@ function collectImageValues(
 
   const directUrl = item.url
   if (typeof directUrl === 'string') pushImageValue(directUrl, images, value, mimeType)
+
+  const inlineData = item.inlineData || item.inline_data
+  if (inlineData && typeof inlineData === 'object') {
+    const inline = inlineData as Record<string, unknown>
+    const data = inline.data
+    const inlineMimeType = inline.mimeType || inline.mime_type
+    if (typeof data === 'string') {
+      const effectiveMimeType = typeof inlineMimeType === 'string' ? inlineMimeType : mimeType
+      images.push({
+        b64Json: data.startsWith('data:image/') ? data : withDataUrlPrefix(data, effectiveMimeType),
+        raw: value,
+      })
+    }
+  }
 
   for (const key of ['b64_json', 'b64Json', 'base64', 'data', 'image']) {
     const imageValue = item[key]

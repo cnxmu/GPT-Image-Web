@@ -2,6 +2,8 @@ import {
   DEFAULT_COMPRESSION_RATE,
   IMAGE_MODEL,
   getImageSize,
+  getDefaultImageModel,
+  getImageModelFamily,
   isAspectRatio,
   isImageModel,
   isImageModelFamily,
@@ -50,6 +52,13 @@ export function getActionTemplateDraft(action: AgentProposedAction, state: Workb
   const patch = getActionFormPatch(action)
   const aspectRatio = patch.aspectRatio || state.aspectRatio
   const resolutionTier = patch.resolutionTier || state.resolutionTier
+  const imageModelFamily = patch.imageModel
+    ? getImageModelFamily(patch.imageModel)
+    : patch.imageModelFamily || state.imageModelFamily
+  const imageModel =
+    patch.imageModel && getImageModelFamily(patch.imageModel) === imageModelFamily
+      ? patch.imageModel
+      : getDefaultImageModel(imageModelFamily)
   const now = nowIso()
   const name = typeof payload.name === 'string' && payload.name.trim()
     ? payload.name.trim()
@@ -62,8 +71,8 @@ export function getActionTemplateDraft(action: AgentProposedAction, state: Workb
     name,
     description: description || undefined,
     mode: patch.mode || state.mode,
-    imageModelFamily: 'gpt-image-2',
-    imageModel: IMAGE_MODEL,
+    imageModelFamily,
+    imageModel,
     prompt: patch.prompt ?? state.prompt,
     negativePrompt: (patch.negativePrompt ?? state.negativePrompt) || undefined,
     aspectRatio,
@@ -114,8 +123,8 @@ export function applyFormPatch(patch: AgentFormPatch, state: WorkbenchState) {
 export function templateToFormPatch(template: TemplateRecord): AgentFormPatch {
   return {
     mode: template.mode,
-    imageModelFamily: 'gpt-image-2',
-    imageModel: IMAGE_MODEL,
+    imageModelFamily: template.imageModelFamily || 'gpt-image-2',
+    imageModel: template.imageModel || IMAGE_MODEL,
     prompt: template.prompt,
     negativePrompt: template.negativePrompt || '',
     aspectRatio: template.aspectRatio,
@@ -131,8 +140,8 @@ export function templateToFormPatch(template: TemplateRecord): AgentFormPatch {
 export function historyToFormPatch(record: HistoryRecord): AgentFormPatch {
   return sanitizeFormPatch({
     mode: record.mode,
-    imageModelFamily: 'gpt-image-2',
-    imageModel: IMAGE_MODEL,
+    imageModelFamily: record.params.imageModelFamily,
+    imageModel: record.params.imageModel,
     prompt: record.prompt,
     negativePrompt: record.negativePrompt || '',
     aspectRatio: record.params.aspectRatio,

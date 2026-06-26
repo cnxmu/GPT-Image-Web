@@ -20,11 +20,13 @@ describe('ParameterPanel', () => {
     expect(screen.queryByRole('button', { name: '非流式' })).toBeNull()
   })
 
-  it('shows only gpt-image-2 as the image model', () => {
+  it('shows selectable image models', () => {
     render(<ParameterPanel />)
 
     expect(screen.getByText('gpt-image-2')).toBeTruthy()
-    expect(screen.queryByRole('combobox', { name: /生图模型/i })).toBeNull()
+    fireEvent.click(screen.getByRole('combobox', { name: '生图模型' }))
+    expect(screen.getByText('nano-banana-2')).toBeTruthy()
+    expect(screen.getByText('nano-banana-pro')).toBeTruthy()
   })
 
   it('updates resolution tier and target size', () => {
@@ -46,5 +48,19 @@ describe('ParameterPanel', () => {
     expect(screen.getByText('审查')).toBeTruthy()
     expect(screen.getByText('输出格式')).toBeTruthy()
     expect(screen.getByText(/压缩率/)).toBeTruthy()
+  })
+
+  it('hides gpt-image-2-only controls for Nano Banana models', () => {
+    render(<ParameterPanel />)
+
+    fireEvent.click(screen.getByRole('combobox', { name: '生图模型' }))
+    fireEvent.click(screen.getByText('nano-banana-pro'))
+
+    expect(screen.queryByText('质量')).toBeNull()
+    expect(screen.queryByText('审查')).toBeNull()
+    expect(screen.queryByText('输出格式')).toBeNull()
+    expect(screen.queryByText(/^压缩率 \d+%$/)).toBeNull()
+    expect(screen.getByText(/Nano Banana 仅使用构图比例和分辨率档位/)).toBeTruthy()
+    expect(screen.getByText('数量')).toBeTruthy()
   })
 })

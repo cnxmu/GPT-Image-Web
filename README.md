@@ -6,10 +6,10 @@ GitHub 仓库：<https://github.com/cnxmu/GPT-Image-Web>
 
 ## 当前能力
 
-- 文生图：使用 `gpt-image-2`，请求 `/v1/images/generations`。
-- 图生图：使用 `gpt-image-2`，请求 `/v1/images/edits`，参考图原图上传。
+- 文生图：支持 `gpt-image-2`、`nano-banana-2`、`nano-banana-pro`。
+- 图生图：支持 `gpt-image-2`、`nano-banana-2`、`nano-banana-pro`，参考图原图上传。
 - 批量生成：页面数量可以设到 `1-100`，内部按 `n=1` 拆成逐张请求。
-- 并发控制：默认并发 `20`，可在个人设置中调整为 `1-100`。
+- 并发控制：默认并发 `10`，可在个人设置中调整为 `1-10`，超过并发的任务会自动排队。
 - 当前结果区：新一轮生成只显示当前批次，旧批次保留在“我的历史”。
 - 运行中历史：批次创建时就写入历史占位；刷新后会尝试恢复未完成任务。
 - 本地图片资产：参考图、Agent 图片和生成结果都会保存到浏览器 IndexedDB。
@@ -61,6 +61,7 @@ npm run lint     # 代码检查
 打开网页后，进入右上角“个人设置”：
 
 - 填写“生图 API Key”
+- 填写“Nano Banana API Key”
 - 填写“Agent API Key”
 - 选择 Agent 模型：`gpt-5.5`、`gpt-5.4`、`gpt-5.4-mini`
 - 按需调整“生成并发上限”
@@ -72,36 +73,41 @@ npm run lint     # 代码检查
 接口基地址在 [src/lib/constants.ts](E:/Users/cnxmu/Documents/kaifa/生图工作站-网页端/src/lib/constants.ts:1)：
 
 ```ts
-export const API_BASE_URL = 'https://api.example.com'
+export const API_BASE_URL = 'https://img.xmu.la'
 ```
 
 当前接口：
 
-- 文生图：`POST /v1/images/generations`
-- 图生图：`POST /v1/images/edits`
+- `gpt-image-2` 文生图：`POST /v1/images/generations`
+- `gpt-image-2` 图生图：`POST /v1/images/edits`
+- `nano-banana-2`：`POST /v1beta/models/nano-banana-2:generateContent`
+- `nano-banana-pro`：`POST /v1beta/models/nano-banana-pro:generateContent`
 - Agent：`POST /v1/responses`
 
-生图请求固定使用：
+密钥分开保存：
 
-- `model: gpt-image-2`
-- `n: 1`
+- `gpt-image-2` 使用“生图 API Key”。
+- `nano-banana-2` / `nano-banana-pro` 使用“Nano Banana API Key”。
+- Agent 使用“Agent API Key”。
 
-数量大于 1 时，由前端队列拆成多次请求。
+普通图片接口单次请求固定 `n: 1`。数量大于 1 时，由前端队列拆成多次请求。
+
+Nano Banana 使用 `generateContent`，文生图会发送文本内容，图生图会把参考图原始文件作为 `inlineData` 发送，不压缩、不转码。它只使用 `generationConfig.imageConfig.aspectRatio` 和 `generationConfig.imageConfig.imageSize` 作为图片参数，不使用 `quality`、`moderation`、`output_format`、`output_compression`。
 
 ## 生图参数
 
 右侧“个人生成设置”当前支持：
 
 - 模式：文生图 / 图生图
-- 生图模型：固定 `gpt-image-2`
+- 生图模型：`gpt-image-2`、`nano-banana-2`、`nano-banana-pro`
 - 构图比例：`1:1`、`3:2`、`2:3`、`16:9`、`9:16`、`4:3`、`3:4`、`21:9`
 - 分辨率档位：`1K`、`2K`、`4K`
 - 最终尺寸：由构图比例和分辨率档位自动计算
-- 质量：`low`、`medium`、`high`、`auto`
-- 审查：`auto`、`low`
-- 输出格式：`png`、`jpeg`、`webp`
+- 质量：`low`、`medium`、`high`、`auto`，仅 `gpt-image-2`
+- 审查：`auto`、`low`，仅 `gpt-image-2`
+- 输出格式：`png`、`jpeg`、`webp`，仅 `gpt-image-2`
 - 数量：`1-100`
-- 压缩率：仅 JPEG / WebP 会传 `output_compression`，PNG 不传
+- 压缩率：仅 `gpt-image-2` 的 JPEG / WebP 会传 `output_compression`，PNG 不传
 
 ## 图片与历史
 
@@ -136,6 +142,7 @@ IndexedDB 数据库名：`ImageWorkbenchDB`。
 会保存：
 
 - 生图 API Key
+- Nano Banana API Key
 - Agent API Key
 - 设置项
 - 个人模板

@@ -20,7 +20,7 @@ export function GenerationSafetyField() {
     }, []) || DEFAULT_GENERATION_CONCURRENCY
   return (
     <div className="grid gap-4">
-      <Field label="生成并发上限" hint={`默认 ${DEFAULT_GENERATION_CONCURRENCY}，可设 ${MIN_GENERATION_CONCURRENCY}-${MAX_GENERATION_CONCURRENCY}。数值越高越容易触发限流和浏览器内存压力。`}>
+      <Field label="生成并发上限" hint={`默认 ${DEFAULT_GENERATION_CONCURRENCY}，最多 ${MAX_GENERATION_CONCURRENCY}。超过并发上限的图片会自动排队等待。`}>
         <Input
           type="number"
           min={MIN_GENERATION_CONCURRENCY}

@@ -5,6 +5,7 @@ import {
   ASPECT_RATIOS,
   DEFAULT_AGENT_MODEL,
   DEFAULT_GENERATION_CONCURRENCY,
+  API_ENDPOINTS,
   IMAGE_MODEL,
   IMAGE_MODEL_FAMILIES,
   IMAGE_MODELS,
@@ -42,24 +43,36 @@ describe('image size matrix', () => {
 describe('models', () => {
   it('uses the configured image and agent models', () => {
     expect(IMAGE_MODEL).toBe('gpt-image-2')
-    expect(IMAGE_MODEL_FAMILIES).toEqual(['gpt-image-2'])
-    expect(IMAGE_MODELS).toEqual(['gpt-image-2'])
+    expect(IMAGE_MODEL_FAMILIES).toEqual(['gpt-image-2', 'nano-banana-2', 'nano-banana-pro'])
+    expect(IMAGE_MODELS).toEqual(['gpt-image-2', 'nano-banana-2', 'nano-banana-pro'])
     expect(AGENT_MODELS).toEqual(['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini'])
     expect(DEFAULT_AGENT_MODEL).toBe('gpt-5.5')
   })
 
-  it('maps the image model family to gpt-image-2', () => {
+  it('builds Nano Banana generateContent endpoints', () => {
+    expect(API_ENDPOINTS.nanoBananaGenerateContent('nano-banana-2')).toBe(
+      'https://img.xmu.la/v1beta/models/nano-banana-2:generateContent',
+    )
+    expect(API_ENDPOINTS.nanoBananaGenerateContent('nano-banana-pro')).toBe(
+      'https://img.xmu.la/v1beta/models/nano-banana-pro:generateContent',
+    )
+  })
+
+  it('maps image model families to their default models', () => {
     expect(getImageModelOptions('gpt-image-2')).toEqual(['gpt-image-2'])
     expect(getDefaultImageModel('gpt-image-2')).toBe('gpt-image-2')
     expect(getImageModelFamily('gpt-image-2')).toBe('gpt-image-2')
+    expect(getImageModelOptions('nano-banana-2')).toEqual(['nano-banana-2'])
+    expect(getDefaultImageModel('nano-banana-pro')).toBe('nano-banana-pro')
+    expect(getImageModelFamily('nano-banana-2')).toBe('nano-banana-2')
   })
 })
 
 describe('generation queue', () => {
-  it('uses a safer default concurrency and keeps the advanced upper bound', () => {
+  it('caps generation concurrency at 10', () => {
     expect(MIN_GENERATION_CONCURRENCY).toBe(1)
-    expect(DEFAULT_GENERATION_CONCURRENCY).toBe(20)
-    expect(MAX_GENERATION_CONCURRENCY).toBe(100)
+    expect(DEFAULT_GENERATION_CONCURRENCY).toBe(10)
+    expect(MAX_GENERATION_CONCURRENCY).toBe(10)
   })
 })
 

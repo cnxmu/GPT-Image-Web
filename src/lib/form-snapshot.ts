@@ -1,10 +1,13 @@
 import {
   DEFAULT_COMPRESSION_RATE,
-  IMAGE_MODEL,
   MAX_IMAGE_COUNT,
   MIN_IMAGE_COUNT,
+  getDefaultImageModel,
+  getImageModelFamily,
   getImageSize,
   isAspectRatio,
+  isImageModel,
+  isImageModelFamily,
   isImageQuality,
   isModerationLevel,
   isOutputFormat,
@@ -22,6 +25,8 @@ export function snapshotFormFromStore(
   state: Pick<
     WorkbenchState,
     | 'mode'
+    | 'imageModelFamily'
+    | 'imageModel'
     | 'prompt'
     | 'negativePrompt'
     | 'aspectRatio'
@@ -35,8 +40,8 @@ export function snapshotFormFromStore(
 ): ImageFormState {
   return {
     mode: state.mode,
-    imageModelFamily: 'gpt-image-2',
-    imageModel: IMAGE_MODEL,
+    imageModelFamily: state.imageModelFamily,
+    imageModel: state.imageModel,
     prompt: state.prompt.trim(),
     negativePrompt: state.negativePrompt.trim(),
     aspectRatio: state.aspectRatio,
@@ -64,11 +69,25 @@ export function formStateFromHistoryRecord(record: HistoryRecord): ImageFormStat
     ? record.params.resolutionTier
     : defaultResolutionTier
   const outputFormat = record.params.outputFormat && isOutputFormat(record.params.outputFormat) ? record.params.outputFormat : 'png'
+  const imageModelFromHistory =
+    typeof record.params.imageModel === 'string' && isImageModel(record.params.imageModel)
+      ? record.params.imageModel
+      : undefined
+  const imageModelFamily =
+    typeof record.params.imageModelFamily === 'string' && isImageModelFamily(record.params.imageModelFamily)
+      ? record.params.imageModelFamily
+      : imageModelFromHistory
+        ? getImageModelFamily(imageModelFromHistory)
+        : 'gpt-image-2'
+  const imageModel =
+    imageModelFromHistory && getImageModelFamily(imageModelFromHistory) === imageModelFamily
+      ? imageModelFromHistory
+      : getDefaultImageModel(imageModelFamily)
 
   return {
     mode: record.mode as WorkbenchMode,
-    imageModelFamily: 'gpt-image-2',
-    imageModel: IMAGE_MODEL,
+    imageModelFamily,
+    imageModel,
     prompt: record.prompt,
     negativePrompt: record.negativePrompt || '',
     aspectRatio,

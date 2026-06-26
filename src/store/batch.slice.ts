@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand'
 import { getMimeType } from '../lib/image-utils'
+import { formStateFromHistoryRecord } from '../lib/form-snapshot'
 import type { GenerationBatch, GenerationJob, GenerationStats } from '../types/image'
 import type { HistoryRecord } from '../types/history'
 import type { WorkbenchState } from './workbench.store'
@@ -44,21 +45,7 @@ export const createBatchSlice: StateCreator<WorkbenchState, [], [], BatchSlice> 
 })
 
 function historyToBatch(record: HistoryRecord): GenerationBatch | undefined {
-  const formState = {
-    mode: record.mode,
-    imageModelFamily: 'gpt-image-2' as GenerationBatch['form']['imageModelFamily'],
-    imageModel: 'gpt-image-2' as GenerationBatch['form']['imageModel'],
-    prompt: record.prompt,
-    negativePrompt: record.negativePrompt || '',
-    aspectRatio: record.params.aspectRatio as GenerationBatch['form']['aspectRatio'],
-    resolutionTier: record.params.resolutionTier as GenerationBatch['form']['resolutionTier'],
-    size: record.params.size as GenerationBatch['form']['size'],
-    quality: record.params.quality as GenerationBatch['form']['quality'],
-    moderation: record.params.moderation as GenerationBatch['form']['moderation'],
-    count: record.params.count,
-    compressionRate: (record.params.compressionRate ?? 0.8) as number,
-    outputFormat: (record.params.outputFormat || 'png') as GenerationBatch['form']['outputFormat'],
-  }
+  const formState = formStateFromHistoryRecord(record)
 
   const historyResults =
     record.results.length > 0

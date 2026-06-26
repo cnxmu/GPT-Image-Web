@@ -38,3 +38,8 @@ export async function fileToDataUrl(file: File | Blob, mimeType?: string) {
   const effectiveMimeType = mimeType || ('type' in file ? file.type : undefined) || 'application/octet-stream'
   return `data:${effectiveMimeType};base64,${base64}`
 }
+
+export async function fileToBase64(file: File | Blob) {
+  const dataUrl = await fileToDataUrl(file)
+  return dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl
+}

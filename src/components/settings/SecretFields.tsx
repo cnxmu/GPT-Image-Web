@@ -11,11 +11,14 @@ import { Field } from '../workbench/field'
 export function SecretFields() {
   const secrets = useLiveQuery(() => db.secrets.toArray(), [], [])
   const imageSecret = secrets.find((item) => item.id === 'imageApiKey')?.value || ''
+  const nanoBananaSecret = secrets.find((item) => item.id === 'nanoBananaApiKey')?.value || ''
   const agentSecret = secrets.find((item) => item.id === 'agentApiKey')?.value || ''
   const [imageApiKey, setImageApiKey] = useState<string | undefined>()
+  const [nanoBananaApiKey, setNanoBananaApiKey] = useState<string | undefined>()
   const [agentApiKey, setAgentApiKey] = useState<string | undefined>()
   const [visible, setVisible] = useState(false)
   const currentImageApiKey = imageApiKey ?? imageSecret
+  const currentNanoBananaApiKey = nanoBananaApiKey ?? nanoBananaSecret
   const currentAgentApiKey = agentApiKey ?? agentSecret
 
   return (
@@ -25,13 +28,23 @@ export function SecretFields() {
         label="生图 API Key"
         value={currentImageApiKey}
         visible={visible}
+        hint="用于 gpt-image-2 文生图和图生图。"
         onChange={setImageApiKey}
+      />
+      <SecretField
+        id="nanoBananaApiKey"
+        label="Nano Banana API Key"
+        value={currentNanoBananaApiKey}
+        visible={visible}
+        hint="用于 nano-banana-2 / nano-banana-pro，和上面的生图 Key 分开保存。"
+        onChange={setNanoBananaApiKey}
       />
       <SecretField
         id="agentApiKey"
         label="Agent API Key"
         value={currentAgentApiKey}
         visible={visible}
+        hint="用于个人 Agent 对话和提示词优化。"
         onChange={setAgentApiKey}
       />
       <div className="flex flex-wrap gap-2">
@@ -40,6 +53,7 @@ export function SecretFields() {
           onClick={() =>
             Promise.all([
               setSecret('imageApiKey', currentImageApiKey.trim()),
+              setSecret('nanoBananaApiKey', currentNanoBananaApiKey.trim()),
               setSecret('agentApiKey', currentAgentApiKey.trim()),
             ])
           }
@@ -55,7 +69,7 @@ export function SecretFields() {
           variant="destructive"
           onClick={() =>
             confirm('确定清除全部密钥？') &&
-            Promise.all([deleteSecret('imageApiKey'), deleteSecret('agentApiKey')])
+            Promise.all([deleteSecret('imageApiKey'), deleteSecret('nanoBananaApiKey'), deleteSecret('agentApiKey')])
           }
         >
           <Trash2 className="h-4 w-4" />

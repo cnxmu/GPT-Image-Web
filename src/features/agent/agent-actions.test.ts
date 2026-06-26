@@ -4,7 +4,7 @@ import type { AgentProposedAction } from '../../types/api'
 import { getActionTemplateDraft } from './agent-actions'
 
 describe('agent actions', () => {
-  it('saves createTemplate actions as user templates with the fixed image model', () => {
+  it('saves createTemplate actions as user templates with the current image model', () => {
     useWorkbenchStore.getState().resetForm()
     useWorkbenchStore.setState({
       imageModelFamily: 'gpt-image-2',
@@ -36,6 +36,27 @@ describe('agent actions', () => {
     expect(draft.imageModelFamily).toBe('gpt-image-2')
     expect(draft.imageModel).toBe('gpt-image-2')
     expect(draft.prompt).toBe('清晰自然的人像摄影')
+  })
+
+  it('saves createTemplate model patches for supported image models', () => {
+    useWorkbenchStore.getState().resetForm()
+
+    const action: AgentProposedAction = {
+      id: 'action_3',
+      type: 'createTemplate',
+      title: '保存新模型模板',
+      status: 'pending',
+      payload: {
+        formPatch: {
+          imageModel: 'nano-banana-pro',
+        },
+      },
+    }
+
+    const draft = getActionTemplateDraft(action, useWorkbenchStore.getState())
+
+    expect(draft.imageModelFamily).toBe('nano-banana-pro')
+    expect(draft.imageModel).toBe('nano-banana-pro')
   })
 
   it('ignores unsupported model patches in createTemplate actions', () => {

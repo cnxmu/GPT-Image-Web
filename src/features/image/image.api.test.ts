@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { API_ENDPOINTS, IMAGE_MODEL } from '../../lib/constants'
 import type { ImageFormState } from '../../types/image'
-import { buildEditFormData, buildGenerationRequest, editImage, generateImage } from './image.api'
+import { buildEditFormData, buildGenerationRequest, buildNanoBananaGenerateContentRequest, editImage, generateImage } from './image.api'
 
 const form: ImageFormState = {
   mode: 'generation',
@@ -78,6 +78,37 @@ describe('generateImage', () => {
     expect(body.model).toBe(IMAGE_MODEL)
     expect(response.raw).toMatchObject({ data: [{ b64_json: 'final' }] })
   })
+
+  it('uses generateContent for nano banana text-to-image', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { mimeType: 'image/png', data: 'final' } }] } }] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateImage('banana-key', {
+      ...form,
+      imageModelFamily: 'nano-banana-2',
+      imageModel: 'nano-banana-2',
+    })
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body))
+    expect(fetchMock.mock.calls[0][0]).toBe(API_ENDPOINTS.nanoBananaGenerateContent('nano-banana-2'))
+    expect(body.contents[0].parts[0].text).toContain('一只白色杯子')
+    expect(body.generationConfig).toMatchObject({
+      imageConfig: {
+        aspectRatio: '1:1',
+        imageSize: '1K',
+      },
+      responseModalities: ['IMAGE'],
+      thinkingConfig: {
+        thinkingLevel: 'minimal',
+      },
+    })
+    expect(body.tools).toEqual([])
+  })
 })
 
 describe('editImage', () => {
@@ -98,5 +129,61 @@ describe('editImage', () => {
     expect(fetchMock.mock.calls[0][0]).toBe(API_ENDPOINTS.imageEdits)
     expect(body.get('model')).toBe(IMAGE_MODEL)
     expect(body.get('image')).toBe(file)
+  })
+
+  it('uses generateContent with inline original reference files for nano banana image-to-image', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { mimeType: 'image/png', data: 'final' } }] } }] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const file = new File(['reference'], 'reference.png', { type: 'image/png' })
+
+    await editImage('banana-key', {
+      ...form,
+      mode: 'edit',
+      imageModelFamily: 'nano-banana-pro',
+      imageModel: 'nano-banana-pro',
+    }, [file])
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body))
+    expect(fetchMock.mock.calls[0][0]).toBe(API_ENDPOINTS.nanoBananaGenerateContent('nano-banana-pro'))
+    expect(body.contents[0].parts[1].inlineData).toMatchObject({
+      mimeType: 'image/png',
+    })
+    expect(typeof body.contents[0].parts[1].inlineData.data).toBe('string')
+  })
+})
+
+describe('buildNanoBananaGenerateContentRequest', () => {
+  it('builds text and optional image parts', async () => {
+    const file = new File(['reference'], 'reference.png', { type: 'image/png' })
+    const request = await buildNanoBananaGenerateContentRequest(
+      {
+        ...form,
+        imageModelFamily: 'nano-banana-2',
+        imageModel: 'nano-banana-2',
+      },
+      [file],
+    )
+
+    expect(request.contents[0].parts[0].text).toBe('一只白色杯子')
+    expect(request.contents[0].parts[0].text).not.toContain('Output format')
+    expect(request.contents[0].parts[1].inlineData).toMatchObject({
+      mimeType: 'image/png',
+    })
+    expect(request.generationConfig).toMatchObject({
+      imageConfig: {
+        aspectRatio: '1:1',
+        imageSize: '1K',
+      },
+      responseModalities: ['IMAGE'],
+      thinkingConfig: {
+        thinkingLevel: 'minimal',
+      },
+    })
+    expect(request.tools).toEqual([])
   })
 })

@@ -3,10 +3,11 @@ import {
   API_REQUEST_IMAGE_COUNT,
   getImageSize,
   getOutputCompression,
+  isNanoBananaImageModel,
   type OutputFormat,
 } from '../../lib/constants'
 import { ensureOk } from '../../lib/http'
-import { getMimeType } from '../../lib/image-utils'
+import { fileToBase64, getMimeType } from '../../lib/image-utils'
 import type { ImageFormState } from '../../types/image'
 
 export function buildGenerationRequest(form: ImageFormState) {
@@ -28,6 +29,10 @@ function omitUndefined<T extends Record<string, unknown>>(value: T) {
 }
 
 export async function generateImage(apiKey: string, form: ImageFormState) {
+  if (isNanoBananaImageModel(form.imageModel)) {
+    return generateNanoBananaImage(apiKey, form)
+  }
+
   const request = buildGenerationRequest(form)
   const response = await fetch(API_ENDPOINTS.imageGenerations, {
     method: 'POST',
@@ -71,6 +76,10 @@ export function buildEditFormData(form: ImageFormState, referenceImages: File[])
 }
 
 export async function editImage(apiKey: string, form: ImageFormState, referenceImages: File[]) {
+  if (isNanoBananaImageModel(form.imageModel)) {
+    return editNanoBananaImage(apiKey, form, referenceImages)
+  }
+
   const { request, formData } = buildEditFormData(form, referenceImages)
   const response = await fetch(API_ENDPOINTS.imageEdits, {
     method: 'POST',
@@ -78,6 +87,94 @@ export async function editImage(apiKey: string, form: ImageFormState, referenceI
       Authorization: `Bearer ${apiKey}`,
     },
     body: formData,
+  })
+
+  return {
+    request,
+    raw: await ensureOk(response),
+  }
+}
+
+export function buildNanoBananaPrompt(form: ImageFormState) {
+  return [
+    form.prompt,
+    form.negativePrompt ? `Negative prompt: ${form.negativePrompt}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+}
+
+export async function buildNanoBananaGenerateContentRequest(form: ImageFormState, referenceImages: File[] = []) {
+  const parts: Array<Record<string, unknown>> = [
+    {
+      text: buildNanoBananaPrompt(form),
+    },
+  ]
+
+  for (const file of referenceImages) {
+    parts.push({
+      inlineData: {
+        mimeType: file.type || 'application/octet-stream',
+        data: await fileToBase64(file),
+      },
+    })
+  }
+
+  return {
+    contents: [
+      {
+        role: 'user',
+        parts,
+      },
+    ],
+    generationConfig: {
+      imageConfig: {
+        aspectRatio: form.aspectRatio,
+        imageSize: form.resolutionTier,
+      },
+      responseModalities: ['IMAGE'],
+      thinkingConfig: {
+        thinkingLevel: 'minimal',
+      },
+    },
+    tools: [],
+  }
+}
+
+async function generateNanoBananaImage(apiKey: string, form: ImageFormState) {
+  const model = form.imageModel
+  if (!isNanoBananaImageModel(model)) {
+    throw new Error('不是 Nano Banana 生图模型')
+  }
+  const request = await buildNanoBananaGenerateContentRequest(form)
+  const response = await fetch(API_ENDPOINTS.nanoBananaGenerateContent(model), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(request),
+  })
+
+  return {
+    request,
+    raw: await ensureOk(response),
+  }
+}
+
+async function editNanoBananaImage(apiKey: string, form: ImageFormState, referenceImages: File[]) {
+  const model = form.imageModel
+  if (!isNanoBananaImageModel(model)) {
+    throw new Error('不是 Nano Banana 生图模型')
+  }
+  const request = await buildNanoBananaGenerateContentRequest(form, referenceImages)
+  const response = await fetch(API_ENDPOINTS.nanoBananaGenerateContent(model), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(request),
   })
 
   return {

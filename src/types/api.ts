@@ -103,7 +103,7 @@ export interface AgentConversationRecord {
 }
 
 export interface SecretRecord {
-  id: 'imageApiKey' | 'agentApiKey'
+  id: 'imageApiKey' | 'nanoBananaApiKey' | 'agentApiKey'
   value: string
   updatedAt: string
 }

@@ -1,7 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { HistoryRecord } from '../../types/history'
 import type { GenerationJob, ImageFormState } from '../../types/image'
-import { createBatch, createInitialHistory, createRestoredBatchFromHistory, toHistoryResult } from './useGenerateImages'
+import { createBatch, createInitialHistory, createRestoredBatchFromHistory, getImageApiKeyForModel, toHistoryResult } from './useGenerateImages'
+
+const getSecret = vi.hoisted(() => vi.fn())
+
+vi.mock('../../db/secrets.repo', () => ({
+  getSecret: (id: string) => getSecret(id),
+}))
 
 const form: ImageFormState = {
   mode: 'generation',
@@ -137,5 +143,33 @@ describe('generation history persistence', () => {
         },
       },
     })
+  })
+})
+
+describe('image generation keys', () => {
+  it('uses the normal image key for gpt-image-2', async () => {
+    getSecret.mockImplementation(async (id: string) => ({
+      id,
+      value: id === 'imageApiKey' ? 'normal-key' : 'banana-key',
+      updatedAt: '',
+    }))
+
+    await expect(getImageApiKeyForModel(form)).resolves.toBe('normal-key')
+  })
+
+  it('uses the separate Nano Banana key for Nano Banana models', async () => {
+    getSecret.mockImplementation(async (id: string) => ({
+      id,
+      value: id === 'nanoBananaApiKey' ? 'banana-key' : 'normal-key',
+      updatedAt: '',
+    }))
+
+    await expect(
+      getImageApiKeyForModel({
+        ...form,
+        imageModelFamily: 'nano-banana-pro',
+        imageModel: 'nano-banana-pro',
+      }),
+    ).resolves.toBe('banana-key')
   })
 })

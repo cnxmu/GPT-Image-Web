@@ -11,6 +11,7 @@ import { getGenerationConcurrency } from '../../db/settings.repo'
 import { upsertHistory } from '../../db/history.repo'
 import { useWorkbenchStore } from '../../store/workbench.store'
 import { snapshotFormFromStore, formStateFromHistoryRecord } from '../../lib/form-snapshot'
+import { isNanoBananaImageModel } from '../../lib/constants'
 import type { AssetRecord } from '../../types/api'
 import type { HistoryImageResult, HistoryRecord, HistoryReferenceImage } from '../../types/history'
 import type { GenerationBatch, GenerationJob, ImageFormState, NormalizedImageResult } from '../../types/image'
@@ -27,7 +28,7 @@ interface RunnerJob extends GenerationJob {
 const runnerContext = new Map<string, RunnerJob>()
 let schedulerActive = false
 let restoreStarted = false
-let schedulerConcurrency = 20
+let schedulerConcurrency = 10
 
 function snapshotForm(state: ReturnType<typeof useWorkbenchStore.getState>): ImageFormState {
   return snapshotFormFromStore(state)
@@ -169,7 +170,7 @@ async function persistBatchHistory(batch: GenerationBatch) {
     referenceImages: batch.referenceImages,
     results,
     error: batch.failed > 0 && batch.success === 0 ? results.find((item) => item.error)?.error : undefined,
-    rawRequest: batch.rawRequest,
+    rawRequest: stripImagePayload(batch.rawRequest),
     rawResponse: stripImagePayload(batch.rawResponse),
     notice: batch.notice,
   }
@@ -259,9 +260,11 @@ function formFromHistoryRecord(record: HistoryRecord): ImageFormState {
   return formStateFromHistoryRecord(record)
 }
 
-async function getImageApiKeyForModel(form: ImageFormState) {
+export async function getImageApiKeyForModel(form: ImageFormState) {
   const imageKey = (await getSecret('imageApiKey'))?.value?.trim()
-  void form
+  if (isNanoBananaImageModel(form.imageModel)) {
+    return (await getSecret('nanoBananaApiKey'))?.value?.trim() || ''
+  }
   return imageKey || ''
 }
 
@@ -487,7 +490,14 @@ export function useGenerateImagesMutation() {
       const referenceImages = store.referenceImages.map((item) => item.file)
       const apiKey = await getImageApiKeyForModel(form)
 
-      if (!apiKey) throw new AppError('MISSING_IMAGE_API_KEY', '请先在个人设置中保存生图 API Key')
+      if (!apiKey) {
+        throw new AppError(
+          'MISSING_IMAGE_API_KEY',
+          isNanoBananaImageModel(form.imageModel)
+            ? '请先在个人设置中保存 Nano Banana API Key'
+            : '请先在个人设置中保存生图 API Key',
+        )
+      }
       validateForm(form, referenceImages)
 
       const historyReferenceImages = form.mode === 'edit' ? await persistReferenceImages(referenceImages) : []

@@ -2,7 +2,11 @@ import type { StateCreator } from 'zustand'
 import {
   DEFAULT_COMPRESSION_RATE,
   IMAGE_MODEL,
+  getDefaultImageModel,
+  getImageModelFamily,
   getImageSize,
+  isImageModel,
+  isImageModelFamily,
   MAX_IMAGE_COUNT,
   MIN_IMAGE_COUNT,
   type AspectRatio,
@@ -85,12 +89,12 @@ export const createFormSlice: StateCreator<WorkbenchState, [], [], FormSlice> = 
   setImageModelFamily: (imageModelFamily) =>
     set({
       imageModelFamily,
-      imageModel: IMAGE_MODEL,
+      imageModel: getDefaultImageModel(imageModelFamily),
     }),
   setImageModel: (imageModel) =>
     set({
       imageModel,
-      imageModelFamily: 'gpt-image-2',
+      imageModelFamily: getImageModelFamily(imageModel),
     }),
   setPrompt: (prompt) => set({ prompt }),
   setNegativePrompt: (negativePrompt) => set({ negativePrompt }),
@@ -155,10 +159,20 @@ export const createFormSlice: StateCreator<WorkbenchState, [], [], FormSlice> = 
   },
   applyTemplate: (template) => {
     const size = getImageSize(template.aspectRatio, template.resolutionTier)
+    const imageModelFamily =
+      template.imageModelFamily && isImageModelFamily(template.imageModelFamily)
+        ? template.imageModelFamily
+        : template.imageModel && isImageModel(template.imageModel)
+          ? getImageModelFamily(template.imageModel)
+          : 'gpt-image-2'
+    const imageModel =
+      template.imageModel && isImageModel(template.imageModel) && getImageModelFamily(template.imageModel) === imageModelFamily
+        ? template.imageModel
+        : getDefaultImageModel(imageModelFamily)
     set({
       mode: template.mode,
-      imageModelFamily: 'gpt-image-2',
-      imageModel: IMAGE_MODEL,
+      imageModelFamily,
+      imageModel,
       prompt: template.prompt,
       negativePrompt: template.negativePrompt || '',
       aspectRatio: template.aspectRatio,
