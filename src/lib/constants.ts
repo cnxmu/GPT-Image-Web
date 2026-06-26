@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'https://img.xmu.la'
+export const API_BASE_URL = 'https://api.example.com'
 
 export const API_ENDPOINTS = {
   imageGenerations: `${API_BASE_URL}/v1/images/generations`,
